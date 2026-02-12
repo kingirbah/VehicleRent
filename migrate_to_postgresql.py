@@ -26,7 +26,7 @@ def get_postgres_config():
             'database': result.path[1:],
             'user': result.username,
             'password': result.password,
-            'port': result.port or 5432
+            'port': result.port or 6543
         }
     else:
         # Use individual environment variables
