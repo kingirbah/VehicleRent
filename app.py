@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
-import sqlite3
+import psycopg2
+from psycopg2.extras import RealDictCursor
 import os
 from datetime import datetime, timedelta
 from functools import wraps
@@ -7,12 +8,26 @@ from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 import io
 from PIL import Image
+from dotenv import load_dotenv
+from contextlib import contextmanager
+
+# Load environment variables
+load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = "vehiclesrent_v7_ultra_secure_key_2026_production"
+app.secret_key = os.getenv('SECRET_KEY', 'vehiclesrent_v7_ultra_secure_key_2026_production')
 
 # --- CONFIGURATION ---
-WHATSAPP_NUMBER = "6285111040408"
+WHATSAPP_NUMBER = os.getenv('WHATSAPP_NUMBER', '6285111040408')
+
+# Database configuration
+DB_CONFIG = {
+    'host': os.getenv('SUPABASE_HOST'),
+    'database': os.getenv('SUPABASE_DB', 'postgres'),
+    'user': os.getenv('SUPABASE_USER', 'postgres'),
+    'password': os.getenv('SUPABASE_PASSWORD'),
+    'port': os.getenv('SUPABASE_PORT', 5432)
+}
 
 # Upload configuration
 UPLOAD_FOLDER = 'static/uploads/vehicles'
@@ -25,6 +40,26 @@ ITEMS_PER_PAGE = 50
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(CUSTOMER_PHOTO_FOLDER, exist_ok=True)
+
+
+# --- DATABASE CONNECTION ---
+@contextmanager
+def get_db_connection():
+    """Context manager for database connections"""
+    conn = psycopg2.connect(**DB_CONFIG)
+    try:
+        yield conn
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        raise e
+    finally:
+        conn.close()
+
+
+def get_db_cursor(conn):
+    """Get cursor with RealDictCursor for dict-like rows"""
+    return conn.cursor(cursor_factory=RealDictCursor)
 
 
 # --- FILE UPLOAD HELPERS ---
@@ -71,110 +106,58 @@ def compress_and_save_image(file, filename, folder=UPLOAD_FOLDER):
         return None
 
 
-# --- DATABASE MANAGEMENT ---
-def get_db():
-    conn = sqlite3.connect('database.db')
-    conn.row_factory = sqlite3.Row
-    return conn
-
-
+# --- DATABASE INITIALIZATION ---
 def init_db():
-    """Initialize database with all required tables"""
-    with get_db() as conn:
-        # Admin Users Table
-        conn.execute('''CREATE TABLE IF NOT EXISTS admin_users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id TEXT UNIQUE NOT NULL,
-            password_hash TEXT NOT NULL,
-            full_name TEXT NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            last_login TIMESTAMP
-        )''')
+    """Check and update database schema"""
+    with get_db_connection() as conn:
+        cursor = get_db_cursor(conn)
         
-        # Vehicles Table
-        conn.execute('''CREATE TABLE IF NOT EXISTS vehicles (
-            id INTEGER PRIMARY KEY AUTOINCREMENT, 
-            name TEXT UNIQUE NOT NULL, 
-            type TEXT NOT NULL, 
-            cc TEXT NOT NULL,
-            license_plate TEXT UNIQUE,
-            category TEXT DEFAULT 'Motor',
-            price_day INTEGER NOT NULL, 
-            price_3day INTEGER NOT NULL, 
-            price_weekly INTEGER NOT NULL, 
-            price_monthly INTEGER NOT NULL,
-            image_url TEXT,
-            terms_and_conditions TEXT,
-            is_active INTEGER DEFAULT 1,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )''')
+        print("\nChecking database schema...")
         
-        # Bookings Table
-        conn.execute('''CREATE TABLE IF NOT EXISTS bookings (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            booking_number TEXT UNIQUE NOT NULL,
-            vehicle_id INTEGER NOT NULL, 
-            customer_name TEXT NOT NULL, 
-            ic_number TEXT,
-            nationality TEXT DEFAULT 'Malaysian',
-            customer_photo TEXT,
-            location TEXT, 
-            destination TEXT,
-            start_date TEXT NOT NULL, 
-            pickup_time TEXT NOT NULL, 
-            end_date TEXT NOT NULL, 
-            return_time TEXT NOT NULL,
-            total_price REAL,
-            status TEXT DEFAULT 'pending',
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (vehicle_id) REFERENCES vehicles (id) ON DELETE CASCADE
-        )''')
+        # Check vehicles table columns
+        cursor.execute("""
+            SELECT column_name 
+            FROM information_schema.columns 
+            WHERE table_name = 'vehicles'
+        """)
+        vehicle_columns = [row['column_name'] for row in cursor.fetchall()]
         
-        # Create indexes
-        conn.execute('CREATE INDEX IF NOT EXISTS idx_bookings_vehicle ON bookings(vehicle_id)')
-        conn.execute('CREATE INDEX IF NOT EXISTS idx_bookings_status ON bookings(status)')
-        conn.execute('CREATE INDEX IF NOT EXISTS idx_bookings_created ON bookings(created_at)')
-        conn.execute('CREATE INDEX IF NOT EXISTS idx_bookings_dates ON bookings(start_date, end_date)')
-        conn.execute('CREATE INDEX IF NOT EXISTS idx_bookings_month ON bookings(substr(start_date, 1, 7))')
-        
-        # Check and add missing columns
-        cursor = conn.cursor()
-        
-        cursor.execute("PRAGMA table_info(vehicles)")
-        vehicle_columns = [column[1] for column in cursor.fetchall()]
-        
+        # Add missing columns to vehicles if needed
         if 'license_plate' not in vehicle_columns:
-            conn.execute("ALTER TABLE vehicles ADD COLUMN license_plate TEXT")
+            cursor.execute("ALTER TABLE vehicles ADD COLUMN license_plate VARCHAR(50) UNIQUE")
             print("  ✓ Added column: license_plate")
         
         if 'category' not in vehicle_columns:
-            conn.execute("ALTER TABLE vehicles ADD COLUMN category TEXT DEFAULT 'Motor'")
-            conn.execute("UPDATE vehicles SET category = 'Motor' WHERE category IS NULL")
+            cursor.execute("ALTER TABLE vehicles ADD COLUMN category VARCHAR(50) DEFAULT 'Motor'")
+            cursor.execute("UPDATE vehicles SET category = 'Motor' WHERE category IS NULL")
             print("  ✓ Added column: category")
         
-        if 'image_url' not in vehicle_columns:
-            conn.execute("ALTER TABLE vehicles ADD COLUMN image_url TEXT")
-            print("  ✓ Added column: image_url")
-        
         if 'terms_and_conditions' not in vehicle_columns:
-            conn.execute("ALTER TABLE vehicles ADD COLUMN terms_and_conditions TEXT")
+            cursor.execute("ALTER TABLE vehicles ADD COLUMN terms_and_conditions TEXT")
             print("  ✓ Added column: terms_and_conditions")
         
-        cursor.execute("PRAGMA table_info(bookings)")
-        booking_columns = [column[1] for column in cursor.fetchall()]
+        # Check bookings table columns
+        cursor.execute("""
+            SELECT column_name 
+            FROM information_schema.columns 
+            WHERE table_name = 'bookings'
+        """)
+        booking_columns = [row['column_name'] for row in cursor.fetchall()]
         
         if 'booking_number' not in booking_columns:
-            conn.execute("ALTER TABLE bookings ADD COLUMN booking_number TEXT")
+            cursor.execute("ALTER TABLE bookings ADD COLUMN booking_number VARCHAR(50) UNIQUE")
+            print("  ✓ Added column: booking_number")
             
+            # Generate booking numbers for existing records
             cursor.execute("SELECT id, created_at FROM bookings WHERE booking_number IS NULL OR booking_number = ''")
             existing_bookings = cursor.fetchall()
             
             if existing_bookings:
                 date_counters = {}
                 for booking in existing_bookings:
-                    booking_id = booking[0]
-                    created_at = booking[1] or datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                    date_str = created_at.split(' ')[0].replace('-', '')
+                    booking_id = booking['id']
+                    created_at = booking['created_at'] or datetime.now()
+                    date_str = created_at.strftime('%Y%m%d')
                     
                     if date_str not in date_counters:
                         date_counters[date_str] = 0
@@ -183,33 +166,36 @@ def init_db():
                     sequence = str(date_counters[date_str]).zfill(4)
                     booking_number = f'VR-{date_str}-{sequence}'
                     
-                    conn.execute("UPDATE bookings SET booking_number = ? WHERE id = ?", 
-                               (booking_number, booking_id))
+                    cursor.execute("UPDATE bookings SET booking_number = %s WHERE id = %s", 
+                                 (booking_number, booking_id))
+                print(f"  ✓ Generated {len(existing_bookings)} booking numbers")
         
         if 'nationality' not in booking_columns:
-            conn.execute("ALTER TABLE bookings ADD COLUMN nationality TEXT DEFAULT 'Malaysian'")
+            cursor.execute("ALTER TABLE bookings ADD COLUMN nationality VARCHAR(100) DEFAULT 'Malaysian'")
             print("  ✓ Added column: nationality")
         
         if 'customer_photo' not in booking_columns:
-            conn.execute("ALTER TABLE bookings ADD COLUMN customer_photo TEXT")
+            cursor.execute("ALTER TABLE bookings ADD COLUMN customer_photo TEXT")
             print("  ✓ Added column: customer_photo")
         
         if 'total_price' not in booking_columns:
-            conn.execute("ALTER TABLE bookings ADD COLUMN total_price REAL")
+            cursor.execute("ALTER TABLE bookings ADD COLUMN total_price DECIMAL(10,2)")
             print("  ✓ Added column: total_price")
         
-        # Create default admin if no users exist
-        cursor.execute("SELECT COUNT(*) FROM admin_users")
-        if cursor.fetchone()[0] == 0:
+        # Check if default admin exists
+        cursor.execute("SELECT COUNT(*) as count FROM admin_users")
+        admin_count = cursor.fetchone()['count']
+        
+        if admin_count == 0:
             default_hash = generate_password_hash('admin123')
-            conn.execute(
-                "INSERT INTO admin_users (user_id, password_hash, full_name) VALUES (?, ?, ?)",
+            cursor.execute(
+                "INSERT INTO admin_users (user_id, password_hash, full_name) VALUES (%s, %s, %s)",
                 ('admin', default_hash, 'Administrator')
             )
-            print("Default admin created - user_id: admin, password: admin123")
+            print("  ✓ Default admin created - user_id: admin, password: admin123")
         
         conn.commit()
-    print("Database initialized successfully!")
+        print("Database schema check completed!\n")
 
 
 # --- AUTHENTICATION ---
@@ -226,52 +212,61 @@ def login_required(f):
 # --- UTILITY FUNCTIONS ---
 def generate_booking_number():
     """Generate unique booking number with format: VR-YYYYMMDD-XXXX"""
-    # FIXED: Use 2026-02-10 as the current date
     now = datetime(2026, 2, 10)
     date_str = now.strftime('%Y%m%d')
     prefix = f'VR-{date_str}-'
     
-    db = get_db()
-    today_start = now.strftime('%Y-%m-%d 00:00:00')
-    today_count = db.execute(
-        'SELECT COUNT(*) as count FROM bookings WHERE created_at >= ?',
-        (today_start,)
-    ).fetchone()['count']
-    
-    sequence = str(today_count + 1).zfill(4)
-    booking_number = prefix + sequence
-    
-    while db.execute('SELECT id FROM bookings WHERE booking_number = ?', (booking_number,)).fetchone():
-        today_count += 1
+    with get_db_connection() as conn:
+        cursor = get_db_cursor(conn)
+        today_start = now.strftime('%Y-%m-%d 00:00:00')
+        
+        cursor.execute(
+            'SELECT COUNT(*) as count FROM bookings WHERE created_at >= %s',
+            (today_start,)
+        )
+        today_count = cursor.fetchone()['count']
+        
         sequence = str(today_count + 1).zfill(4)
         booking_number = prefix + sequence
+        
+        cursor.execute('SELECT id FROM bookings WHERE booking_number = %s', (booking_number,))
+        while cursor.fetchone():
+            today_count += 1
+            sequence = str(today_count + 1).zfill(4)
+            booking_number = prefix + sequence
+            cursor.execute('SELECT id FROM bookings WHERE booking_number = %s', (booking_number,))
     
     return booking_number
 
 
 def check_availability(vehicle_id, start_datetime, end_datetime):
     """Check if vehicle is available for given date range"""
-    db = get_db()
-    query = '''
-        SELECT * FROM bookings 
-        WHERE vehicle_id = ? 
-        AND status != 'cancelled'
-        AND datetime(start_date || " " || pickup_time) < datetime(?) 
-        AND datetime(end_date || " " || return_time) > datetime(?)
-    '''
-    conflict = db.execute(query, (vehicle_id, end_datetime, start_datetime)).fetchone()
-    return conflict is None
+    with get_db_connection() as conn:
+        cursor = get_db_cursor(conn)
+        query = '''
+            SELECT * FROM bookings 
+            WHERE vehicle_id = %s 
+            AND status != 'cancelled'
+            AND (start_date || ' ' || pickup_time)::timestamp < %s::timestamp
+            AND (end_date || ' ' || return_time)::timestamp > %s::timestamp
+        '''
+        cursor.execute(query, (vehicle_id, end_datetime, start_datetime))
+        conflict = cursor.fetchone()
+        return conflict is None
 
 
 def get_calendar_data(vehicle_id, year, month):
     """Generate calendar data with booking status"""
-    db = get_db()
-    
-    bookings = db.execute('''
-        SELECT start_date, pickup_time, end_date, return_time, status 
-        FROM bookings 
-        WHERE vehicle_id = ? AND status != 'cancelled'
-    ''', (vehicle_id,)).fetchall()
+    with get_db_connection() as conn:
+        cursor = get_db_cursor(conn)
+        
+        cursor.execute('''
+            SELECT start_date, pickup_time, end_date, return_time, status 
+            FROM bookings 
+            WHERE vehicle_id = %s AND status != 'cancelled'
+        ''', (vehicle_id,))
+        
+        bookings = cursor.fetchall()
     
     if month == 12:
         next_month = datetime(year + 1, 1, 1)
@@ -329,40 +324,34 @@ def get_calendar_data(vehicle_id, year, month):
 @app.route('/')
 def index():
     """Public catalog page with availability checking"""
-    db = get_db()
     category = request.args.get('category', 'Motor')
     start_date = request.args.get('start', '')
     end_date = request.args.get('end', '')
     
-    # Get all active vehicles in category
-    vehicles_raw = db.execute(
-        'SELECT * FROM vehicles WHERE is_active = 1 AND category = ? ORDER BY type, name',
-        (category,)
-    ).fetchall()
+    with get_db_connection() as conn:
+        cursor = get_db_cursor(conn)
+        cursor.execute(
+            'SELECT * FROM vehicles WHERE is_active = 1 AND category = %s ORDER BY type, name',
+            (category,)
+        )
+        vehicles_raw = cursor.fetchall()
     
-    # Convert to list of dicts and check availability
     vehicles = []
     for vehicle in vehicles_raw:
         vehicle_dict = dict(vehicle)
         
-        # Check availability ONLY if dates are provided
         if start_date and end_date:
             try:
-                # Parse dates
                 start_dt = datetime.strptime(start_date, '%Y-%m-%d %H:%M')
                 end_dt = datetime.strptime(end_date, '%Y-%m-%d %H:%M')
                 
-                # Format for database query
                 start_str = start_dt.strftime('%Y-%m-%d %H:%M')
                 end_str = end_dt.strftime('%Y-%m-%d %H:%M')
                 
-                # Check if available
                 vehicle_dict['available'] = check_availability(vehicle['id'], start_str, end_str)
             except:
-                # If date parsing fails, show as available
                 vehicle_dict['available'] = True
         else:
-            # IMPORTANT: When NO dates selected, default to True (show Available badge)
             vehicle_dict['available'] = True
         
         vehicles.append(vehicle_dict)
@@ -383,22 +372,23 @@ def login():
         user_id = request.form.get('user_id')
         password = request.form.get('password')
         
-        db = get_db()
-        user = db.execute('SELECT * FROM admin_users WHERE user_id = ?', (user_id,)).fetchone()
-        
-        if user and check_password_hash(user['password_hash'], password):
-            session['admin_logged_in'] = True
-            session['user_id'] = user['user_id']
-            session['full_name'] = user['full_name']
+        with get_db_connection() as conn:
+            cursor = get_db_cursor(conn)
+            cursor.execute('SELECT * FROM admin_users WHERE user_id = %s', (user_id,))
+            user = cursor.fetchone()
             
-            db.execute('UPDATE admin_users SET last_login = ? WHERE id = ?',
-                      (datetime.now().strftime('%Y-%m-%d %H:%M:%S'), user['id']))
-            db.commit()
-            
-            flash('Login successful!', 'success')
-            return redirect(url_for('admin_catalog'))
-        else:
-            flash('Invalid user ID or password!', 'error')
+            if user and check_password_hash(user['password_hash'], password):
+                session['admin_logged_in'] = True
+                session['user_id'] = user['user_id']
+                session['full_name'] = user['full_name']
+                
+                cursor.execute('UPDATE admin_users SET last_login = %s WHERE id = %s',
+                            (datetime.now(), user['id']))
+                
+                flash('Login successful!', 'success')
+                return redirect(url_for('admin_catalog'))
+            else:
+                flash('Invalid user ID or password!', 'error')
     
     return render_template('login.html')
 
@@ -416,8 +406,11 @@ def logout():
 @login_required
 def admin_users():
     """Manage admin users"""
-    db = get_db()
-    users = db.execute('SELECT * FROM admin_users ORDER BY created_at DESC').fetchall()
+    with get_db_connection() as conn:
+        cursor = get_db_cursor(conn)
+        cursor.execute('SELECT * FROM admin_users ORDER BY created_at DESC')
+        users = cursor.fetchall()
+    
     return render_template('admin_users.html', users=users)
 
 
@@ -433,16 +426,16 @@ def admin_add_user():
             
             password_hash = generate_password_hash(password)
             
-            db = get_db()
-            db.execute(
-                'INSERT INTO admin_users (user_id, password_hash, full_name) VALUES (?, ?, ?)',
-                (user_id, password_hash, full_name)
-            )
-            db.commit()
+            with get_db_connection() as conn:
+                cursor = get_db_cursor(conn)
+                cursor.execute(
+                    'INSERT INTO admin_users (user_id, password_hash, full_name) VALUES (%s, %s, %s)',
+                    (user_id, password_hash, full_name)
+                )
             
             flash('Admin user added successfully!', 'success')
             return redirect(url_for('admin_users'))
-        except sqlite3.IntegrityError:
+        except psycopg2.IntegrityError:
             flash('User ID already exists!', 'error')
         except Exception as e:
             flash(f'Error: {str(e)}', 'error')
@@ -454,24 +447,28 @@ def admin_add_user():
 @login_required
 def admin_delete_user(id):
     """Delete admin user"""
-    db = get_db()
+    with get_db_connection() as conn:
+        cursor = get_db_cursor(conn)
+        
+        # Prevent deleting yourself
+        cursor.execute('SELECT user_id FROM admin_users WHERE id = %s', (id,))
+        user = cursor.fetchone()
+        
+        if user and user['user_id'] == session.get('user_id'):
+            flash('Cannot delete your own account!', 'error')
+            return redirect(url_for('admin_users'))
+        
+        # Ensure at least one admin remains
+        cursor.execute('SELECT COUNT(*) as cnt FROM admin_users')
+        count = cursor.fetchone()['cnt']
+        
+        if count <= 1:
+            flash('Cannot delete the last admin user!', 'error')
+            return redirect(url_for('admin_users'))
+        
+        cursor.execute('DELETE FROM admin_users WHERE id = %s', (id,))
     
-    # Prevent deleting yourself
-    user = db.execute('SELECT user_id FROM admin_users WHERE id = ?', (id,)).fetchone()
-    if user and user['user_id'] == session.get('user_id'):
-        flash('Cannot delete your own account!', 'error')
-        return redirect(url_for('admin_users'))
-    
-    # Ensure at least one admin remains
-    count = db.execute('SELECT COUNT(*) as cnt FROM admin_users').fetchone()['cnt']
-    if count <= 1:
-        flash('Cannot delete the last admin user!', 'error')
-        return redirect(url_for('admin_users'))
-    
-    db.execute('DELETE FROM admin_users WHERE id = ?', (id,))
-    db.commit()
     flash('User deleted successfully!', 'success')
-    
     return redirect(url_for('admin_users'))
 
 
@@ -480,41 +477,38 @@ def admin_delete_user(id):
 @login_required
 def admin_catalog():
     """Admin vehicle catalog with search and filter"""
-    db = get_db()
-    
-    # Get search and filter parameters
     search_query = request.args.get('search', '').strip()
     category = request.args.get('category', 'all')
     
-    # Build SQL query
     sql = "SELECT * FROM vehicles WHERE 1=1"
     params = []
     
-    # Add category filter
     if category != 'all':
-        sql += " AND category = ?"
+        sql += " AND category = %s"
         params.append(category)
     
-    # Add search filter (searches in multiple fields)
     if search_query:
         sql += """ AND (
-            name LIKE ? OR 
-            license_plate LIKE ? OR 
-            type LIKE ? OR 
-            CAST(cc AS TEXT) LIKE ?
+            name ILIKE %s OR 
+            license_plate ILIKE %s OR 
+            type ILIKE %s OR 
+            cc::TEXT ILIKE %s
         )"""
         search_param = f"%{search_query}%"
-        params.extend([search_param, search_param, search_param, search_param])
+        params.extend([search_param] * 4)
     
-    # Order by active status and name
     sql += " ORDER BY is_active DESC, category, name ASC"
     
-    # Execute query
-    vehicles = db.execute(sql, params).fetchall()
-    
-    # Get statistics for all vehicles (ignoring filters for dashboard stats)
-    total_vehicles = db.execute("SELECT COUNT(*) as total FROM vehicles").fetchone()['total']
-    active_vehicles = db.execute("SELECT COUNT(*) as active FROM vehicles WHERE is_active = 1").fetchone()['active']
+    with get_db_connection() as conn:
+        cursor = get_db_cursor(conn)
+        cursor.execute(sql, params)
+        vehicles = cursor.fetchall()
+        
+        cursor.execute("SELECT COUNT(*) as total FROM vehicles")
+        total_vehicles = cursor.fetchone()['total']
+        
+        cursor.execute("SELECT COUNT(*) as active FROM vehicles WHERE is_active = 1")
+        active_vehicles = cursor.fetchone()['active']
     
     return render_template('admin_catalog.html', 
                          vehicles=vehicles,
@@ -529,36 +523,36 @@ def admin_add_vehicle():
     """Add new vehicle"""
     if request.method == 'POST':
         try:
-            db = get_db()
-            
             image_path = None
             if 'image' in request.files:
                 file = request.files['image']
                 if file and file.filename and allowed_file(file.filename):
                     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
                     filename = secure_filename(f"{timestamp}_{file.filename}")
-                    image_path = compress_and_save_image(file, filename)
-                    if image_path:
+                    saved_path = compress_and_save_image(file, filename)
+                    if saved_path:
                         image_path = f"/static/uploads/vehicles/{filename}"
             
-            db.execute('''INSERT INTO vehicles 
-                (name, type, cc, license_plate, category, price_day, price_3day, price_weekly, price_monthly, image_url, terms_and_conditions) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', 
-                (request.form['name'],
-                 request.form['type'],
-                 request.form['cc'],
-                 request.form.get('license_plate', '').upper(),
-                 request.form.get('category', 'Motor'),
-                 request.form['price_day'],
-                 request.form['price_3day'],
-                 request.form['price_weekly'],
-                 request.form['price_monthly'],
-                 image_path,
-                 request.form.get('terms_and_conditions', '')))
-            db.commit()
+            with get_db_connection() as conn:
+                cursor = get_db_cursor(conn)
+                cursor.execute('''INSERT INTO vehicles 
+                    (name, type, cc, license_plate, category, price_day, price_3day, price_weekly, price_monthly, image_url, terms_and_conditions) 
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''', 
+                    (request.form['name'],
+                     request.form['type'],
+                     request.form['cc'],
+                     request.form.get('license_plate', '').upper(),
+                     request.form.get('category', 'Motor'),
+                     request.form['price_day'],
+                     request.form['price_3day'],
+                     request.form['price_weekly'],
+                     request.form['price_monthly'],
+                     image_path,
+                     request.form.get('terms_and_conditions', '')))
+            
             flash('Vehicle added successfully!', 'success')
             return redirect(url_for('admin_catalog'))
-        except sqlite3.IntegrityError as e:
+        except psycopg2.IntegrityError as e:
             if 'license_plate' in str(e):
                 flash('License plate already exists!', 'error')
             elif 'name' in str(e):
@@ -575,8 +569,10 @@ def admin_add_vehicle():
 @login_required
 def admin_edit_vehicle(id):
     """Edit vehicle"""
-    db = get_db()
-    vehicle = db.execute('SELECT * FROM vehicles WHERE id = ?', (id,)).fetchone()
+    with get_db_connection() as conn:
+        cursor = get_db_cursor(conn)
+        cursor.execute('SELECT * FROM vehicles WHERE id = %s', (id,))
+        vehicle = cursor.fetchone()
     
     if not vehicle:
         flash('Vehicle not found!', 'error')
@@ -604,27 +600,29 @@ def admin_edit_vehicle(id):
                         
                         image_path = f"/static/uploads/vehicles/{filename}"
             
-            db.execute('''UPDATE vehicles SET 
-                name=?, type=?, cc=?, license_plate=?, category=?,
-                price_day=?, price_3day=?, price_weekly=?, price_monthly=?, 
-                image_url=?, terms_and_conditions=?
-                WHERE id=?''', 
-                (request.form['name'],
-                 request.form['type'],
-                 request.form['cc'],
-                 request.form.get('license_plate', '').upper(),
-                 request.form.get('category', 'Motor'),
-                 request.form['price_day'],
-                 request.form['price_3day'],
-                 request.form['price_weekly'],
-                 request.form['price_monthly'],
-                 image_path,
-                 request.form.get('terms_and_conditions', ''),
-                 id))
-            db.commit()
+            with get_db_connection() as conn:
+                cursor = get_db_cursor(conn)
+                cursor.execute('''UPDATE vehicles SET 
+                    name=%s, type=%s, cc=%s, license_plate=%s, category=%s,
+                    price_day=%s, price_3day=%s, price_weekly=%s, price_monthly=%s, 
+                    image_url=%s, terms_and_conditions=%s
+                    WHERE id=%s''', 
+                    (request.form['name'],
+                     request.form['type'],
+                     request.form['cc'],
+                     request.form.get('license_plate', '').upper(),
+                     request.form.get('category', 'Motor'),
+                     request.form['price_day'],
+                     request.form['price_3day'],
+                     request.form['price_weekly'],
+                     request.form['price_monthly'],
+                     image_path,
+                     request.form.get('terms_and_conditions', ''),
+                     id))
+            
             flash('Vehicle updated successfully!', 'success')
             return redirect(url_for('admin_detail', id=id))
-        except sqlite3.IntegrityError as e:
+        except psycopg2.IntegrityError as e:
             if 'license_plate' in str(e):
                 flash('License plate already exists!', 'error')
             elif 'name' in str(e):
@@ -641,17 +639,19 @@ def admin_edit_vehicle(id):
 @login_required
 def admin_toggle_vehicle(id):
     """Toggle vehicle active status"""
-    db = get_db()
-    vehicle = db.execute('SELECT is_active FROM vehicles WHERE id = ?', (id,)).fetchone()
-    
-    if vehicle:
-        new_status = 0 if vehicle['is_active'] == 1 else 1
-        db.execute('UPDATE vehicles SET is_active = ? WHERE id = ?', (new_status, id))
-        db.commit()
-        status_text = 'activated' if new_status == 1 else 'deactivated'
-        flash(f'Vehicle {status_text} successfully!', 'success')
-    else:
-        flash('Vehicle not found!', 'error')
+    with get_db_connection() as conn:
+        cursor = get_db_cursor(conn)
+        cursor.execute('SELECT is_active FROM vehicles WHERE id = %s', (id,))
+        vehicle = cursor.fetchone()
+        
+        if vehicle:
+            new_status = 0 if vehicle['is_active'] == 1 else 1
+            cursor.execute('UPDATE vehicles SET is_active = %s WHERE id = %s', (new_status, id))
+            
+            status_text = 'activated' if new_status == 1 else 'deactivated'
+            flash(f'Vehicle {status_text} successfully!', 'success')
+        else:
+            flash('Vehicle not found!', 'error')
     
     return redirect(url_for('admin_catalog'))
 
@@ -660,25 +660,24 @@ def admin_toggle_vehicle(id):
 @login_required
 def admin_detail(id):
     """View vehicle details"""
-    db = get_db()
-    vehicle = db.execute('SELECT * FROM vehicles WHERE id = ?', (id,)).fetchone()
+    with get_db_connection() as conn:
+        cursor = get_db_cursor(conn)
+        cursor.execute('SELECT * FROM vehicles WHERE id = %s', (id,))
+        vehicle = cursor.fetchone()
+        
+        if not vehicle:
+            flash('Vehicle not found!', 'error')
+            return redirect(url_for('admin_catalog'))
+        
+        cursor.execute('''SELECT * FROM bookings 
+                        WHERE vehicle_id = %s 
+                        ORDER BY created_at DESC, start_date DESC''', 
+                     (id,))
+        bookings = cursor.fetchall()
     
-    if not vehicle:
-        flash('Vehicle not found!', 'error')
-        return redirect(url_for('admin_catalog'))
-    
-    bookings_raw = db.execute('''SELECT * FROM bookings 
-                            WHERE vehicle_id = ? 
-                            ORDER BY created_at DESC, start_date DESC''', 
-                         (id,)).fetchall()
-    
-    bookings = [dict(row) for row in bookings_raw]
-    
-    # FIXED: Use 2026 as current year instead of system date
     current_year = 2026
-    current_month = 2  # February 2026
+    current_month = 2
     
-    # Get calendar data for current month
     calendar_data = get_calendar_data(id, current_year, current_month)
     
     return render_template('admin_detail.html', 
@@ -702,9 +701,6 @@ def get_vehicle_calendar(id, year, month):
 @login_required
 def admin_on_rent():
     """View currently rented vehicles"""
-    db = get_db()
-    
-    # FIXED: Use 2026-02-10 as current date
     today = datetime(2026, 2, 10).strftime('%Y-%m-%d %H:%M')
     
     query = '''
@@ -712,13 +708,15 @@ def admin_on_rent():
         FROM bookings b
         JOIN vehicles v ON b.vehicle_id = v.id
         WHERE b.status IN ('confirmed', 'pending')
-        AND datetime(b.start_date || " " || b.pickup_time) <= datetime(?)
-        AND datetime(b.end_date || " " || b.return_time) >= datetime(?)
+        AND (b.start_date || ' ' || b.pickup_time)::timestamp <= %s::timestamp
+        AND (b.end_date || ' ' || b.return_time)::timestamp >= %s::timestamp
         ORDER BY b.end_date ASC, b.return_time ASC
     '''
     
-    on_rent_raw = db.execute(query, (today, today)).fetchall()
-    on_rent = [dict(row) for row in on_rent_raw]
+    with get_db_connection() as conn:
+        cursor = get_db_cursor(conn)
+        cursor.execute(query, (today, today))
+        on_rent = cursor.fetchall()
     
     return render_template('admin_on_rent.html', bookings=on_rent)
 
@@ -729,52 +727,54 @@ def admin_on_rent():
 def admin_add_booking(vehicle_id):
     """Add booking"""
     try:
-        db = get_db()
+        with get_db_connection() as conn:
+            cursor = get_db_cursor(conn)
+            cursor.execute('SELECT * FROM vehicles WHERE id = %s', (vehicle_id,))
+            vehicle = cursor.fetchone()
+            
+            if not vehicle:
+                flash('Vehicle not found!', 'error')
+                return redirect(url_for('admin_catalog'))
+            
+            booking_number = generate_booking_number()
+            
+            # Handle customer photo upload
+            customer_photo_path = None
+            if 'customer_photo' in request.files:
+                file = request.files['customer_photo']
+                if file and file.filename and allowed_file(file.filename):
+                    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                    filename = secure_filename(f"customer_{timestamp}_{file.filename}")
+                    saved_path = compress_and_save_image(file, filename, CUSTOMER_PHOTO_FOLDER)
+                    if saved_path:
+                        customer_photo_path = f"/static/uploads/customers/{filename}"
+            
+            # Get total price
+            total_price = request.form.get('total_price', '')
+            try:
+                total_price = float(total_price) if total_price else None
+            except:
+                total_price = None
+            
+            cursor.execute('''INSERT INTO bookings 
+                (booking_number, vehicle_id, customer_name, ic_number, nationality, customer_photo, location, destination,
+                 start_date, pickup_time, end_date, return_time, total_price, status) 
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''', 
+                (booking_number,
+                 vehicle_id,
+                 request.form['customer_name'],
+                 request.form.get('ic_number', ''),
+                 request.form.get('nationality', 'Malaysian'),
+                 customer_photo_path,
+                 request.form.get('location', ''),
+                 request.form.get('destination', ''),
+                 request.form['start_date'],
+                 request.form['pickup_time'],
+                 request.form['end_date'],
+                 request.form['return_time'],
+                 total_price,
+                 request.form.get('status', 'confirmed')))
         
-        vehicle = db.execute('SELECT * FROM vehicles WHERE id = ?', (vehicle_id,)).fetchone()
-        if not vehicle:
-            flash('Vehicle not found!', 'error')
-            return redirect(url_for('admin_catalog'))
-        
-        booking_number = generate_booking_number()
-        
-        # Handle customer photo upload
-        customer_photo_path = None
-        if 'customer_photo' in request.files:
-            file = request.files['customer_photo']
-            if file and file.filename and allowed_file(file.filename):
-                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-                filename = secure_filename(f"customer_{timestamp}_{file.filename}")
-                saved_path = compress_and_save_image(file, filename, CUSTOMER_PHOTO_FOLDER)
-                if saved_path:
-                    customer_photo_path = f"/static/uploads/customers/{filename}"
-        
-        # Get total price from form
-        total_price = request.form.get('total_price', '')
-        try:
-            total_price = float(total_price) if total_price else None
-        except:
-            total_price = None
-        
-        db.execute('''INSERT INTO bookings 
-            (booking_number, vehicle_id, customer_name, ic_number, nationality, customer_photo, location, destination,
-             start_date, pickup_time, end_date, return_time, total_price, status) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', 
-            (booking_number,
-             vehicle_id,
-             request.form['customer_name'],
-             request.form.get('ic_number', ''),
-             request.form.get('nationality', 'Malaysian'),
-             customer_photo_path,
-             request.form.get('location', ''),
-             request.form.get('destination', ''),
-             request.form['start_date'],
-             request.form['pickup_time'],
-             request.form['end_date'],
-             request.form['return_time'],
-             total_price,
-             request.form.get('status', 'confirmed')))
-        db.commit()
         flash(f'Booking added! Number: {booking_number}', 'success')
     except Exception as e:
         flash(f'Error: {str(e)}', 'error')
@@ -787,59 +787,60 @@ def admin_add_booking(vehicle_id):
 def admin_edit_booking(id):
     """Edit booking"""
     try:
-        db = get_db()
-        booking = db.execute('SELECT vehicle_id, customer_photo FROM bookings WHERE id = ?', (id,)).fetchone()
-        
-        if not booking:
-            flash('Booking not found!', 'error')
-            return redirect(url_for('admin_catalog'))
-        
-        # Handle customer photo upload
-        customer_photo_path = booking['customer_photo']
-        if 'customer_photo' in request.files:
-            file = request.files['customer_photo']
-            if file and file.filename and allowed_file(file.filename):
-                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-                filename = secure_filename(f"customer_{timestamp}_{file.filename}")
-                
-                saved_path = compress_and_save_image(file, filename, CUSTOMER_PHOTO_FOLDER)
-                if saved_path:
-                    # Delete old photo
-                    if customer_photo_path and customer_photo_path.startswith('/static/'):
-                        old_path = customer_photo_path.lstrip('/')
-                        if os.path.exists(old_path):
-                            try:
-                                os.remove(old_path)
-                            except:
-                                pass
+        with get_db_connection() as conn:
+            cursor = get_db_cursor(conn)
+            cursor.execute('SELECT vehicle_id, customer_photo FROM bookings WHERE id = %s', (id,))
+            booking = cursor.fetchone()
+            
+            if not booking:
+                flash('Booking not found!', 'error')
+                return redirect(url_for('admin_catalog'))
+            
+            # Handle customer photo upload
+            customer_photo_path = booking['customer_photo']
+            if 'customer_photo' in request.files:
+                file = request.files['customer_photo']
+                if file and file.filename and allowed_file(file.filename):
+                    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                    filename = secure_filename(f"customer_{timestamp}_{file.filename}")
                     
-                    customer_photo_path = f"/static/uploads/customers/{filename}"
+                    saved_path = compress_and_save_image(file, filename, CUSTOMER_PHOTO_FOLDER)
+                    if saved_path:
+                        if customer_photo_path and customer_photo_path.startswith('/static/'):
+                            old_path = customer_photo_path.lstrip('/')
+                            if os.path.exists(old_path):
+                                try:
+                                    os.remove(old_path)
+                                except:
+                                    pass
+                        
+                        customer_photo_path = f"/static/uploads/customers/{filename}"
+            
+            # Get total price
+            total_price = request.form.get('total_price', '')
+            try:
+                total_price = float(total_price) if total_price else None
+            except:
+                total_price = None
+            
+            cursor.execute('''UPDATE bookings SET 
+                customer_name=%s, ic_number=%s, nationality=%s, customer_photo=%s, location=%s, destination=%s,
+                start_date=%s, pickup_time=%s, end_date=%s, return_time=%s, total_price=%s, status=%s
+                WHERE id=%s''', 
+                (request.form['customer_name'],
+                 request.form.get('ic_number', ''),
+                 request.form.get('nationality', 'Malaysian'),
+                 customer_photo_path,
+                 request.form.get('location', ''),
+                 request.form.get('destination', ''),
+                 request.form['start_date'],
+                 request.form['pickup_time'],
+                 request.form['end_date'],
+                 request.form['return_time'],
+                 total_price,
+                 request.form.get('status', 'confirmed'),
+                 id))
         
-        # Get total price from form
-        total_price = request.form.get('total_price', '')
-        try:
-            total_price = float(total_price) if total_price else None
-        except:
-            total_price = None
-        
-        db.execute('''UPDATE bookings SET 
-            customer_name=?, ic_number=?, nationality=?, customer_photo=?, location=?, destination=?,
-            start_date=?, pickup_time=?, end_date=?, return_time=?, total_price=?, status=?
-            WHERE id=?''', 
-            (request.form['customer_name'],
-             request.form.get('ic_number', ''),
-             request.form.get('nationality', 'Malaysian'),
-             customer_photo_path,
-             request.form.get('location', ''),
-             request.form.get('destination', ''),
-             request.form['start_date'],
-             request.form['pickup_time'],
-             request.form['end_date'],
-             request.form['return_time'],
-             total_price,
-             request.form.get('status', 'confirmed'),
-             id))
-        db.commit()
         flash('Booking updated!', 'success')
         return redirect(url_for('admin_detail', id=booking['vehicle_id']))
     except Exception as e:
@@ -851,29 +852,29 @@ def admin_edit_booking(id):
 @login_required
 def admin_delete_booking(id):
     """Delete booking"""
-    db = get_db()
-    booking = db.execute('SELECT vehicle_id, customer_photo FROM bookings WHERE id = ?', (id,)).fetchone()
-    
-    if booking:
-        # Delete customer photo if exists
-        if booking['customer_photo'] and booking['customer_photo'].startswith('/static/'):
-            photo_path = booking['customer_photo'].lstrip('/')
-            if os.path.exists(photo_path):
-                try:
-                    os.remove(photo_path)
-                except:
-                    pass
+    with get_db_connection() as conn:
+        cursor = get_db_cursor(conn)
+        cursor.execute('SELECT vehicle_id, customer_photo FROM bookings WHERE id = %s', (id,))
+        booking = cursor.fetchone()
         
-        db.execute('DELETE FROM bookings WHERE id = ?', (id,))
-        db.commit()
-        flash('Booking deleted!', 'success')
-        return redirect(url_for('admin_detail', id=booking['vehicle_id']))
+        if booking:
+            # Delete customer photo if exists
+            if booking['customer_photo'] and booking['customer_photo'].startswith('/static/'):
+                photo_path = booking['customer_photo'].lstrip('/')
+                if os.path.exists(photo_path):
+                    try:
+                        os.remove(photo_path)
+                    except:
+                        pass
+            
+            cursor.execute('DELETE FROM bookings WHERE id = %s', (id,))
+            flash('Booking deleted!', 'success')
+            return redirect(url_for('admin_detail', id=booking['vehicle_id']))
     
     flash('Booking not found!', 'error')
     return redirect(url_for('admin_catalog'))
 
 
-# --- BOOKING STATUS UPDATE (NEW ROUTE) ---
 @app.route('/admin/booking/<int:id>/update-status', methods=['POST'])
 @login_required
 def admin_update_booking_status(id):
@@ -885,34 +886,29 @@ def admin_update_booking_status(id):
         if new_status not in ['pending', 'confirmed', 'cancelled', 'completed']:
             return jsonify({'success': False, 'message': 'Invalid status'}), 400
         
-        db = get_db()
-        db.execute('UPDATE bookings SET status = ? WHERE id = ?', (new_status, id))
-        db.commit()
+        with get_db_connection() as conn:
+            cursor = get_db_cursor(conn)
+            cursor.execute('UPDATE bookings SET status = %s WHERE id = %s', (new_status, id))
         
         return jsonify({'success': True, 'message': 'Status updated successfully'})
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
 
 
-# --- ALL BOOKINGS (OPTIMIZED WITH FIX) ---
+# --- ALL BOOKINGS (OPTIMIZED) ---
 @app.route('/admin/bookings')
 @login_required
 def admin_all_bookings():
-    """Optimized all bookings with pagination - FIXED: Row to dict conversion"""
-    db = get_db()
-    
-    # Get parameters
+    """Optimized all bookings with pagination"""
     status_filter = request.args.get('status', 'all')
     vehicle_filter = request.args.get('vehicle', 'all')
     search_query = request.args.get('search', '')
     sort_by = request.args.get('sort', 'newest')
     page = int(request.args.get('page', 1))
     
-    # Month filter - FIXED: default to 2026-02 instead of system date
     month_filter = request.args.get('month', '2026-02')
     show_all = request.args.get('show_all', '0') == '1'
     
-    # Base query
     query = '''
         SELECT b.*, v.name as vehicle_name, v.license_plate, v.type as vehicle_type
         FROM bookings b
@@ -923,18 +919,18 @@ def admin_all_bookings():
     
     # Month filter
     if not show_all and month_filter:
-        query += ' AND substr(b.start_date, 1, 7) = ?'
+        query += ' AND SUBSTRING(b.start_date FROM 1 FOR 7) = %s'
         params.append(month_filter)
     
     # Status filter
     if status_filter != 'all':
-        query += ' AND b.status = ?'
+        query += ' AND b.status = %s'
         params.append(status_filter)
     
     # Vehicle filter
     if vehicle_filter and vehicle_filter != 'all':
         try:
-            query += ' AND b.vehicle_id = ?'
+            query += ' AND b.vehicle_id = %s'
             params.append(int(vehicle_filter))
         except (ValueError, TypeError):
             pass
@@ -942,42 +938,46 @@ def admin_all_bookings():
     # Search
     if search_query:
         query += ''' AND (
-            b.booking_number LIKE ? OR 
-            b.customer_name LIKE ? OR 
-            b.ic_number LIKE ? OR
-            v.name LIKE ? OR
-            v.license_plate LIKE ?
+            b.booking_number ILIKE %s OR 
+            b.customer_name ILIKE %s OR 
+            b.ic_number ILIKE %s OR
+            v.name ILIKE %s OR
+            v.license_plate ILIKE %s
         )'''
         search_param = f'%{search_query}%'
         params.extend([search_param] * 5)
     
-    # Count total for pagination
-    count_query = f"SELECT COUNT(*) as total FROM ({query})"
-    total_bookings = db.execute(count_query, params).fetchone()['total']
-    total_pages = (total_bookings + ITEMS_PER_PAGE - 1) // ITEMS_PER_PAGE
+    # Count total
+    with get_db_connection() as conn:
+        cursor = get_db_cursor(conn)
+        
+        count_query = f"SELECT COUNT(*) as total FROM ({query}) as count_query"
+        cursor.execute(count_query, params)
+        total_bookings = cursor.fetchone()['total']
+        total_pages = (total_bookings + ITEMS_PER_PAGE - 1) // ITEMS_PER_PAGE
+        
+        # Sorting
+        if sort_by == 'newest':
+            query += ' ORDER BY b.created_at DESC'
+        elif sort_by == 'oldest':
+            query += ' ORDER BY b.created_at ASC'
+        elif sort_by == 'start_date':
+            query += ' ORDER BY b.start_date DESC'
+        elif sort_by == 'customer':
+            query += ' ORDER BY b.customer_name ASC'
+        
+        # Pagination
+        offset = (page - 1) * ITEMS_PER_PAGE
+        query += f' LIMIT {ITEMS_PER_PAGE} OFFSET {offset}'
+        
+        cursor.execute(query, params)
+        bookings = cursor.fetchall()
+        
+        # Get vehicles for filter
+        cursor.execute('SELECT id, name, license_plate FROM vehicles ORDER BY name')
+        vehicles = cursor.fetchall()
     
-    # Sorting
-    if sort_by == 'newest':
-        query += ' ORDER BY b.created_at DESC'
-    elif sort_by == 'oldest':
-        query += ' ORDER BY b.created_at ASC'
-    elif sort_by == 'start_date':
-        query += ' ORDER BY b.start_date DESC'
-    elif sort_by == 'customer':
-        query += ' ORDER BY b.customer_name ASC'
-    
-    # Pagination
-    offset = (page - 1) * ITEMS_PER_PAGE
-    query += f' LIMIT {ITEMS_PER_PAGE} OFFSET {offset}'
-    
-    # FIXED: Convert Row objects to dictionaries for JSON serialization
-    bookings_raw = db.execute(query, params).fetchall()
-    bookings = [dict(row) for row in bookings_raw]
-    
-    # Get vehicles for filter
-    vehicles = db.execute('SELECT id, name, license_plate FROM vehicles ORDER BY name').fetchall()
-    
-    # Stats (only for current view)
+    # Stats
     stats = {
         'total': total_bookings,
         'confirmed': len([b for b in bookings if b['status'] == 'confirmed']),
@@ -1005,33 +1005,35 @@ def admin_all_bookings():
 @login_required
 def print_bookings_report():
     """Print report"""
-    db = get_db()
-    
     status_filter = request.args.get('status', 'all')
     vehicle_filter = request.args.get('vehicle', 'all')
-    # FIXED: default to 2026-02
     month_filter = request.args.get('month', '2026-02')
     
     query = '''
         SELECT b.*, v.name as vehicle_name, v.license_plate, v.type as vehicle_type
         FROM bookings b
         JOIN vehicles v ON b.vehicle_id = v.id
-        WHERE substr(b.start_date, 1, 7) = ?
+        WHERE SUBSTRING(b.start_date FROM 1 FOR 7) = %s
     '''
     params = [month_filter]
     
     if status_filter != 'all':
-        query += ' AND b.status = ?'
+        query += ' AND b.status = %s'
         params.append(status_filter)
     
     if vehicle_filter != 'all':
-        query += ' AND b.vehicle_id = ?'
-        params.append(int(vehicle_filter))
+        try:
+            query += ' AND b.vehicle_id = %s'
+            params.append(int(vehicle_filter))
+        except:
+            pass
     
     query += ' ORDER BY b.created_at DESC LIMIT 500'
     
-    bookings_raw = db.execute(query, params).fetchall()
-    bookings = [dict(row) for row in bookings_raw]
+    with get_db_connection() as conn:
+        cursor = get_db_cursor(conn)
+        cursor.execute(query, params)
+        bookings = cursor.fetchall()
     
     stats = {
         'total': len(bookings),
@@ -1061,12 +1063,14 @@ def server_error(e):
 
 # --- STARTUP ---
 if __name__ == '__main__':
-    if not os.path.exists('database.db'):
-        print("\nInitializing new database...")
+    print("\nChecking database connection...")
+    try:
         init_db()
-    else:
-        print("\nChecking database schema...")
-        init_db()
+        print("✓ Connected to PostgreSQL/Supabase successfully!")
+    except Exception as e:
+        print(f"✗ Database connection failed: {e}")
+        print("\nPlease check your .env file and database credentials.")
+        exit(1)
     
     print("\nApplication Ready!")
     print("=" * 60)
