@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vehicle Details - Admin Panel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Work Sans', sans-serif; 
+        }
+        
+        h1, h2, h3, h4 { 
+            font-family: 'Sora', sans-serif; 
+        }
+        
+        [x-cloak] { 
+            display: none !important; 
+        }
+        
+        .calendar-day {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.375rem;
+            font-weight: 600;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .calendar-day.available {
+            background-color: #dcfce7;
+            color: #15803d;
+        }
+        
+        .calendar-day.available:hover {
+            background-color: #bbf7d0;
+        }
+        
+        .calendar-day.half {
+            background-color: #fef3c7;
+            color: #a16207;
+        }
+        
+        .calendar-day.half:hover {
+            background-color: #fde68a;
+        }
+        
+        .calendar-day.full {
+            background-color: #fee2e2;
+            color: #b91c1c;
+        }
+        
+        .calendar-day.full:hover {
+            background-color: #fecaca;
+        }
+        
+        .calendar-day.today {
+            box-shadow: 0 0 0 2px #3b82f6;
+        }
+        
+        .booking-item {
+            transition: all 0.2s;
+        }
+        
+        .booking-item.collapsed {
+            max-height: 5rem;
+            overflow: hidden;
+        }
+        
+        .booking-item.expanded {
+            max-height: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-50" x-data="bookingManager()">
+    <nav class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-blue-600 to-blue-800 rounded-lg md:rounded-xl flex items-center justify-center flex-shrink-0">
+                        <svg class="w-5 h-5 md:w-6 md:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                    </div>
+                    <div class="min-w-0"> <h1 class="text-sm md:text-xl font-bold text-gray-900 leading-tight truncate">VehicleRent Admin</h1>
+                        <p class="text-[10px] md:text-xs text-gray-500 truncate">Vehicle Details</p>
+                    </div>
+                </div>
+                
+                <div class="hidden md:flex items-center space-x-4">
+                    <a href="/admin" class="text-sm text-gray-600 hover:text-blue-600 font-medium transition flex items-center gap-1">
+                        <span>←</span> Back to Catalog
+                    </a>
+                    <div class="h-4 w-px bg-gray-300"></div> <a href="/logout" class="text-sm text-red-600 hover:text-red-700 font-semibold transition px-3 py-2 rounded-lg hover:bg-red-50">
+                        Logout
+                    </a>
+                </div>
+
+                <div class="md:hidden flex items-center">
+                    <button id="nav-toggle" class="text-gray-500 hover:text-blue-600 focus:outline-none p-2">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="nav-menu" class="hidden md:hidden bg-white border-b border-gray-100 shadow-lg absolute w-full left-0 top-16 z-40">
+            <div class="px-4 py-3 space-y-3">
+                <a href="/admin" class="block w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
+                    ← Back to Catalog
+                </a>
+                <div class="border-t border-gray-100"></div>
+                <a href="/logout" class="block w-full text-left px-3 py-2 rounded-lg text-sm font-bold text-red-600 hover:bg-red-50 transition">
+                    Logout
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <script>
+        const navToggle = document.getElementById('nav-toggle');
+        const navMenu = document.getElementById('nav-menu');
+
+        if (navToggle && navMenu) {
+            navToggle.addEventListener('click', () => {
+                navMenu.classList.toggle('hidden');
+            });
+        }
+    </script>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div class="mb-6 space-y-3">
+                {% for category, message in messages %}
+                <div class="p-4 rounded-xl {% if category == 'error' %}bg-red-50 border border-red-200 text-red-700{% elif category == 'success' %}bg-green-50 border border-green-200 text-green-700{% else %}bg-blue-50 border border-blue-200 text-blue-700{% endif %}">
+                    <p class="font-semibold">{{ message }}</p>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        {% endwith %}
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-xl md:rounded-2xl shadow-lg overflow-hidden sticky top-4 md:top-8">
+                    <div class="h-40 md:h-48 bg-gradient-to-br from-blue-50 to-blue-100 relative">
+                        {% if vehicle.image_url %}
+                        <img src="{{ vehicle.image_url }}" alt="{{ vehicle.name }}" class="w-full h-full object-cover">
+                        {% else %}
+                        <div class="w-full h-full flex items-center justify-center">
+                            <svg class="w-16 h-16 md:w-24 md:h-24 text-blue-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                            </svg>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="absolute top-3 right-3 md:hidden">
+                            {% if vehicle.is_active %}
+                            <span class="bg-green-500 text-white text-xs font-bold px-2 py-1 rounded shadow">Active</span>
+                            {% else %}
+                            <span class="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded shadow">Inactive</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="p-4 md:p-6">
+                        <div class="mb-4">
+                            <div class="flex items-center space-x-2 mb-2">
+                                <span class="inline-block px-2 py-0.5 md:px-3 md:py-1 bg-blue-100 text-blue-700 text-[10px] md:text-xs font-bold rounded uppercase">
+                                    {{ vehicle.type }}
+                                </span>
+                                <span class="inline-block px-2 py-0.5 md:px-3 md:py-1 bg-gray-100 text-gray-700 text-[10px] md:text-xs font-bold rounded">
+                                    {{ vehicle.cc }}CC
+                                </span>
+                                <span class="hidden md:inline-block px-2 py-0.5 {% if vehicle.is_active %}bg-green-100 text-green-700{% else %}bg-red-100 text-red-700{% endif %} text-xs font-bold rounded ml-auto">
+                                    {% if vehicle.is_active %}Active{% else %}Inactive{% endif %}
+                                </span>
+                            </div>
+                            
+                            <h2 class="text-xl md:text-2xl font-bold text-gray-900 leading-tight">{{ vehicle.name }}</h2>
+                            
+                            {% if vehicle.license_plate %}
+                            <div class="mt-1 md:mt-2 flex items-center space-x-1.5 md:space-x-2">
+                                <svg class="w-3.5 h-3.5 md:w-4 md:h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+                                </svg>
+                                <span class="text-xs md:text-sm font-semibold text-gray-600">{{ vehicle.license_plate }}</span>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="bg-gray-50 rounded-lg p-3 md:p-0 md:bg-transparent mb-4 md:mb-6 md:pb-6 md:border-b border-gray-100">
+                            <div class="grid grid-cols-2 md:grid-cols-1 gap-y-2 gap-x-4 md:space-y-2">
+                                <div class="flex flex-col md:flex-row md:justify-between text-xs md:text-sm">
+                                    <span class="text-gray-500 md:text-gray-600">Daily</span>
+                                    <span class="font-bold text-gray-900">RM {{ vehicle.price_day }}</span>
+                                </div>
+                                <div class="flex flex-col md:flex-row md:justify-between text-xs md:text-sm">
+                                    <span class="text-gray-500 md:text-gray-600">3-Day</span>
+                                    <span class="font-bold text-gray-900">RM {{ vehicle.price_3day }}</span>
+                                </div>
+                                <div class="flex flex-col md:flex-row md:justify-between text-xs md:text-sm">
+                                    <span class="text-gray-500 md:text-gray-600">Weekly</span>
+                                    <span class="font-bold text-gray-900">RM {{ vehicle.price_weekly }}</span>
+                                </div>
+                                <div class="flex flex-col md:flex-row md:justify-between text-xs md:text-sm">
+                                    <span class="text-gray-500 md:text-gray-600">Monthly</span>
+                                    <span class="font-bold text-gray-900">RM {{ vehicle.price_monthly }}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-row gap-2 md:flex-col md:gap-3">
+                            
+                            <a href="/admin/vehicle/{{ vehicle.id }}/edit" 
+                               class="flex-1 md:w-full bg-blue-600 hover:bg-blue-700 text-white text-center py-2.5 md:py-3 rounded-lg md:rounded-xl text-sm font-semibold transition shadow-sm flex items-center justify-center">
+                                Edit
+                            </a>
+
+                            <a href="/admin/vehicle/{{ vehicle.id }}/toggle" 
+                               class="flex-1 md:w-full {% if vehicle.is_active %}bg-red-50 hover:bg-red-100 text-red-600 border border-red-200{% else %}bg-green-50 hover:bg-green-100 text-green-600 border border-green-200{% endif %} text-center py-2.5 md:py-3 rounded-lg md:rounded-xl text-sm font-semibold transition flex items-center justify-center">
+                                {% if vehicle.is_active %}Deactivate{% else %}Activate{% endif %}
+                            </a>
+                            
+                        </div>
+                    </div>
+                </div>
+            </div>  
+
+            <!-- Calendar & Bookings Section -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Availability Calendar -->
+                <div class="bg-white rounded-2xl shadow-lg p-5">
+                    <div class="mb-4">
+                        <h3 class="text-xl font-bold text-gray-900 mb-1">Availability Calendar</h3>
+                        <p class="text-gray-600 text-xs">Check booking status by date</p>
+                    </div>
+
+                    <!-- Month and Year Selectors -->
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="flex-1">
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">Month</label>
+                            <select x-model="currentMonth" 
+                                    @change="loadCalendarData()"
+                                    class="w-full px-3 py-2 text-sm border-2 border-gray-200 rounded-lg focus:border-blue-500 outline-none transition">
+                                <option value="1">January</option>
+                                <option value="2">February</option>
+                                <option value="3">March</option>
+                                <option value="4">April</option>
+                                <option value="5">May</option>
+                                <option value="6">June</option>
+                                <option value="7">July</option>
+                                <option value="8">August</option>
+                                <option value="9">September</option>
+                                <option value="10">October</option>
+                                <option value="11">November</option>
+                                <option value="12">December</option>
+                            </select>
+                        </div>
+                        <div class="flex-1">
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">Year</label>
+                            <select x-model="currentYear" 
+                                    @change="loadCalendarData()"
+                                    class="w-full px-3 py-2 text-sm border-2 border-gray-200 rounded-lg focus:border-blue-500 outline-none transition">
+                                <template x-for="year in getAvailableYears()">
+                                    <option :value="year" x-text="year"></option>
+                                </template>
+                            </select>
+                        </div>
+                        <div class="flex gap-1 pt-5">
+                            <button @click="previousMonth()" 
+                                    class="p-2 hover:bg-gray-100 rounded-lg transition border-2 border-gray-200"
+                                    title="Previous Month">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                                </svg>
+                            </button>
+                            <button @click="nextMonth()" 
+                                    class="p-2 hover:bg-gray-100 rounded-lg transition border-2 border-gray-200"
+                                    title="Next Month">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Legend -->
+                    <div class="flex flex-wrap gap-3 mb-4 pb-3 border-b">
+                        <div class="flex items-center space-x-1.5">
+                            <div class="w-3 h-3 bg-green-100 border-2 border-green-400 rounded"></div>
+                            <span class="text-xs text-gray-700">Available</span>
+                        </div>
+                        <div class="flex items-center space-x-1.5">
+                            <div class="w-3 h-3 bg-yellow-100 border-2 border-yellow-400 rounded"></div>
+                            <span class="text-xs text-gray-700">Half Day</span>
+                        </div>
+                        <div class="flex items-center space-x-1.5">
+                            <div class="w-3 h-3 bg-red-100 border-2 border-red-400 rounded"></div>
+                            <span class="text-xs text-gray-700">Full Day</span>
+                        </div>
+                    </div>
+
+                    <!-- Calendar Grid -->
+                    <div class="grid grid-cols-7 gap-1 mb-4">
+                        <!-- Day Headers -->
+                        <template x-for="day in ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']">
+                            <div class="text-center font-bold text-gray-600 text-[10px] py-1" x-text="day"></div>
+                        </template>
+                        
+                        <!-- Calendar Days -->
+                        <template x-for="(day, index) in calendarDays" :key="index">
+                            <div>
+                                <div x-show="day.inMonth" 
+                                     :class="['calendar-day', day.status, day.isToday ? 'today' : '']"
+                                     :title="day.date"
+                                     x-text="day.day">
+                                </div>
+                                <div x-show="!day.inMonth" class="aspect-square"></div>
+                            </div>
+                        </template>
+                    </div>
+
+                    <!-- Calendar Info -->
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs">
+                        <div class="grid grid-cols-3 gap-2">
+                            <div>
+                                <span class="font-semibold">Month:</span> 
+                                <span x-text="getMonthYearText()"></span>
+                            </div>
+                            <div>
+                                <span class="font-semibold">Days:</span> 
+                                <span x-text="calendarDays.filter(d => d.inMonth).length"></span>
+                            </div>
+                            <div>
+                                <span class="font-semibold">Starts on:</span> 
+                                <span x-text="['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][calendarDays.findIndex(d => d.inMonth)]"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bookings Section -->
+                <div class="bg-white rounded-2xl shadow-lg p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <div>
+                            <h3 class="text-2xl font-bold text-gray-900">Booking History</h3>
+                            <p class="text-gray-600 text-sm" x-text="filteredBookings.length + ' of {{ bookings|length }} bookings'"></p>
+                        </div>
+                        <div class="flex gap-2">
+                            <button @click="showAddModal = true" 
+                                    class="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-5 py-2.5 rounded-xl font-semibold transition shadow-lg flex items-center space-x-2 text-sm">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                                </svg>
+                                <span>Add Booking</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Filters -->
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4 pb-4 border-b">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">Search Name</label>
+                            <input type="text" 
+                                   x-model="searchName" 
+                                   @input="filterBookings()"
+                                   placeholder="Customer name..."
+                                   class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:border-blue-500 outline-none transition">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">Month</label>
+                            <select x-model="filterMonth" 
+                                    @change="filterBookings()"
+                                    class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:border-blue-500 outline-none transition">
+                                <option value="">All Months</option>
+                                <option value="01">January</option>
+                                <option value="02">February</option>
+                                <option value="03">March</option>
+                                <option value="04">April</option>
+                                <option value="05">May</option>
+                                <option value="06">June</option>
+                                <option value="07">July</option>
+                                <option value="08">August</option>
+                                <option value="09">September</option>
+                                <option value="10">October</option>
+                                <option value="11">November</option>
+                                <option value="12">December</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">Year</label>
+                            <select x-model="filterYear" 
+                                    @change="filterBookings()"
+                                    class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:border-blue-500 outline-none transition">
+                                <option value="">All Years</option>
+                                <template x-for="year in availableYears">
+                                    <option :value="year" x-text="year"></option>
+                                </template>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">Status</label>
+                            <select x-model="filterStatus" 
+                                    @change="filterBookings()"
+                                    class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:border-blue-500 outline-none transition">
+                                <option value="">All Status</option>
+                                <option value="pending">Pending</option>
+                                <option value="confirmed">Confirmed</option>
+                                <option value="cancelled">Cancelled</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Bookings List -->
+                    {% if bookings %}
+                    <div class="space-y-2 max-h-[600px] overflow-y-auto">
+                        <template x-for="booking in filteredBookings" :key="booking.id">
+                            <div x-data="{ expanded: false }" class="border border-gray-200 rounded-lg overflow-hidden hover:border-blue-300 transition">
+                                <!-- Collapsed View -->
+                                <div class="p-3 flex justify-between items-center cursor-pointer bg-white hover:bg-gray-50 transition" @click="expanded = !expanded">
+                                    <div class="flex-1 flex items-center space-x-3">
+                                        <!-- Customer Photo -->
+                                        <div x-show="booking.customer_photo" class="flex-shrink-0">
+                                            <img :src="booking.customer_photo" 
+                                                 alt="Customer photo" 
+                                                 class="w-12 h-12 rounded-full object-cover border-2 border-blue-200">
+                                        </div>
+                                        <div class="flex-1">
+                                            <div class="flex items-center space-x-2 mb-1">
+                                                <h4 class="font-bold text-base text-gray-900" x-text="booking.customer_name"></h4>
+                                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase"
+                                                      :class="{
+                                                          'bg-green-100 text-green-700': booking.status === 'confirmed',
+                                                          'bg-yellow-100 text-yellow-700': booking.status === 'pending',
+                                                          'bg-red-100 text-red-700': booking.status === 'cancelled',
+                                                          'bg-gray-100 text-gray-700': !['confirmed', 'pending', 'cancelled'].includes(booking.status)
+                                                      }"
+                                                      x-text="booking.status"></span>
+                                            </div>
+                                            <p class="text-[10px] text-blue-600 font-bold mb-0.5" x-text="booking.booking_number || '#' + String(booking.id).padStart(6, '0')"></p>
+                                            <p class="text-xs text-gray-600" x-text="booking.start_date + ' - ' + booking.end_date"></p>
+                                        </div>
+                                        <svg class="w-4 h-4 text-gray-400 transition-transform flex-shrink-0" :class="{ 'rotate-180': expanded }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                        </svg>
+                                    </div>
+                                </div>
+
+                                <!-- Expanded View -->
+                                <div x-show="expanded" x-collapse x-cloak>
+                                    <div class="px-3 pb-3 border-t border-gray-200 pt-3 bg-gray-50">
+                                        <!-- Customer Photo (Larger in expanded view) -->
+                                        <div x-show="booking.customer_photo" class="mb-3">
+                                            <p class="text-xs font-semibold text-gray-600 mb-2">Customer Photo</p>
+                                            <img :src="booking.customer_photo" 
+                                                 alt="Customer photo" 
+                                                 class="w-32 h-32 rounded-lg object-cover border-2 border-gray-200">
+                                        </div>
+                                        
+                                        <div class="grid grid-cols-2 gap-3 mb-3">
+                                            <div x-show="booking.ic_number">
+                                                <p class="text-[10px] text-gray-500 font-semibold mb-0.5">IC Number</p>
+                                                <p class="text-xs font-medium text-gray-900" x-text="booking.ic_number"></p>
+                                            </div>
+                                            <div x-show="booking.nationality">
+                                                <p class="text-[10px] text-gray-500 font-semibold mb-0.5">Nationality</p>
+                                                <p class="text-xs font-medium text-gray-900" x-text="booking.nationality"></p>
+                                            </div>
+                                            <div>
+                                                <p class="text-[10px] text-gray-500 font-semibold mb-0.5">Pickup Time</p>
+                                                <p class="text-xs font-medium text-gray-900" x-text="booking.start_date + ' ' + booking.pickup_time"></p>
+                                            </div>
+                                            <div>
+                                                <p class="text-[10px] text-gray-500 font-semibold mb-0.5">Return Time</p>
+                                                <p class="text-xs font-medium text-gray-900" x-text="booking.end_date + ' ' + booking.return_time"></p>
+                                            </div>
+                                            <div x-show="booking.total_price" class="col-span-2">
+                                                <p class="text-[10px] text-gray-500 font-semibold mb-0.5">Total Price</p>
+                                                <p class="text-base font-bold text-green-600" x-text="'RM ' + parseFloat(booking.total_price).toFixed(2)"></p>
+                                            </div>
+                                        </div>
+
+                                        <div x-show="booking.location || booking.destination" class="bg-white rounded-lg p-2 mb-3 text-xs">
+                                            <p x-show="booking.location" class="text-gray-700 mb-1"><span class="font-semibold">From:</span> <span x-text="booking.location"></span></p>
+                                            <p x-show="booking.destination" class="text-gray-700"><span class="font-semibold">To:</span> <span x-text="booking.destination"></span></p>
+                                        </div>
+
+                                        <div class="flex gap-2">
+                                            <button @click="printReceipt(booking)" 
+                                                    class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg font-semibold transition text-xs flex items-center justify-center gap-1">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+                                                </svg>
+                                                Print
+                                            </button>
+                                            <button @click="openEditModal(booking)" 
+                                                    class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-semibold transition text-xs">
+                                                Edit
+                                            </button>
+                                            <a :href="'/admin/booking/' + booking.id + '/delete'" 
+                                               onclick="return confirm('Are you sure you want to delete this booking?')"
+                                               class="px-4 bg-red-600 hover:bg-red-700 text-white py-2 rounded-lg font-semibold transition text-xs flex items-center justify-center">
+                                                Delete
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- No Results -->
+                        <div x-show="filteredBookings.length === 0" class="text-center py-8">
+                            <svg class="w-16 h-16 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                            <h4 class="text-lg font-bold text-gray-400 mb-1">No Bookings Found</h4>
+                            <p class="text-sm text-gray-400">Try adjusting your filters</p>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-12">
+                        <svg class="w-20 h-20 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                        <h4 class="text-xl font-bold text-gray-400 mb-2">No Bookings Yet</h4>
+                        <p class="text-gray-400 mb-6">This vehicle has no reservations</p>
+                        <button @click="showAddModal = true" 
+                                class="inline-block bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-bold transition">
+                            Add First Booking
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Booking Modal -->
+    <div x-show="showAddModal" 
+         x-cloak
+         class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-8 max-h-[90vh] overflow-y-auto" @click.away="showAddModal = false">
+            <h3 class="text-2xl font-bold text-gray-900 mb-6">Add New Booking</h3>
+            
+            <form action="/admin/booking/add/{{ vehicle.id }}" method="POST" enctype="multipart/form-data" class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="col-span-2">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Customer Name *</label>
+                        <input type="text" name="customer_name" required
+                               class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 outline-none transition">
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">IC Number</label>
+                        <input type="text" name="ic_number"
+                               class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 outline-none transition">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Nationality *</label>
+                        <select name="nationality" required
+                                class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 outline-none transition">
+                            <option value="Malaysian" selected>Malaysian</option>
+                            <option value="Indonesian">Indonesian</option>
+                            <option value="Singaporean">Singaporean</option>
+                            <option value="Thai">Thai</option>
+                            <option value="Filipino">Filipino</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Customer Photo (Optional)</label>
+                        <input type="file" name="customer_photo" accept="image/*"
+                               class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 outline-none transition">
+                        <p class="text-xs text-gray-500 mt-1">Upload customer ID photo or selfie (max 1MB)</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Pickup Location</label>
+                        <input type="text" name="location"
+                               class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 outline-none transition">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Destination</label>
+                        <input type="text" name="destination"
+                               class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 outline-none transition">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Start Date *</label>
+                        <input type="text" name="start_date" id="add_start_date" required
+                               class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 outline-none transition">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Pickup Time *</label>
+                        <input type="text" name="pickup_time" id="add_pickup_time" required
+                               class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 outline-none transition">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">End Date *</label>
+                        <input type="text" name="end_date" id="add_end_date" required
+                               class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 outline-none transition">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Return Time *</label>
+                        <input type="text" name="return_time" id="add_return_time" required
+                               class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 outline-none transition">
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Total Price (RM)</label>
+                        <input type="number" name="total_price" step="0.01" min="0" placeholder="Enter total rental price"
+                               class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 outline-none transition">
+                        <p class="text-xs text-gray-500 mt-1">Optional: Enter the agreed rental price</p>
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Status</label>
+                        <select name="status" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 outline-none transition">
+                            <option value="pending">Pending</option>
+                            <option value="confirmed" selected>Confirmed</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="flex space-x-3 pt-4">
+                    <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-bold transition">
+                        Add Booking
+                    </button>
+                    <button type="button" @click="showAddModal = false" class="px-8 bg-gray-200 hover:bg-gray-300 text-gray-700 py-3 rounded-xl font-semibold transition">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Booking Modal -->
+    <div x-show="showEditModal" 
+         x-cloak
+         class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-8 max-h-[90vh] overflow-y-auto" @click.away="showEditModal = false">
+            <h3 class="text-2xl font-bold text-gray-900 mb-6">Edit Booking</h3>
+            
+            <form :action="'/admin/booking/' + editBookingId + '/edit'" method="POST" enctype="multipart/form-data" class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="col-span-2">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Customer Name *</label>
+                        <input type="text" name="customer_name" x-model="editData.customer_name" required
+                               class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 outline-none transition">
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">IC Number</label>
+                        <input type="text" name="ic_number" x-model="editData.ic_number"
+                               class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 outline-none transition">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Nationality *</label>
+                        <select name="nationality" x-model="editData.nationality" required
+                                class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 outline-none transition">
+                            <option value="Malaysian">Malaysian</option>
+                            <option value="Indonesian">Indonesian</option>
+                            <option value="Singaporean">Singaporean</option>
+                            <option value="Thai">Thai</option>
+                            <option value="Filipino">Filipino</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Customer Photo (Optional)</label>
+                        <div x-show="editData.customer_photo" class="mb-2">
+                            <img :src="editData.customer_photo" class="h-32 w-32 object-cover rounded-lg border-2 border-gray-200">
+                            <p class="text-xs text-gray-500 mt-1">Current photo</p>
+                        </div>
+                        <input type="file" name="customer_photo" accept="image/*"
+                               class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 outline-none transition">
+                        <p class="text-xs text-gray-500 mt-1">Upload new photo to replace (max 1MB)</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Pickup Location</label>
+                        <input type="text" name="location" x-model="editData.location"
+                               class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 outline-none transition">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Destination</label>
+                        <input type="text" name="destination" x-model="editData.destination"
+                               class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 outline-none transition">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Start Date *</label>
+                        <input type="text" name="start_date" x-model="editData.start_date" required
+                               class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 outline-none transition">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Pickup Time *</label>
+                        <input type="text" name="pickup_time" x-model="editData.pickup_time" required
+                               class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 outline-none transition">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">End Date *</label>
+                        <input type="text" name="end_date" x-model="editData.end_date" required
+                               class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 outline-none transition">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Return Time *</label>
+                        <input type="text" name="return_time" x-model="editData.return_time" required
+                               class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 outline-none transition">
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Total Price (RM)</label>
+                        <input type="number" name="total_price" x-model="editData.total_price" step="0.01" min="0" placeholder="Enter total rental price"
+                               class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 outline-none transition">
+                        <p class="text-xs text-gray-500 mt-1">Optional: Enter the agreed rental price</p>
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Status</label>
+                        <select name="status" x-model="editData.status" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 outline-none transition">
+                            <option value="pending">Pending</option>
+                            <option value="confirmed">Confirmed</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="flex space-x-3 pt-4">
+                    <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-bold transition">
+                        Save Changes
+                    </button>
+                    <button type="button" @click="showEditModal = false" class="px-8 bg-gray-200 hover:bg-gray-300 text-gray-700 py-3 rounded-xl font-semibold transition">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script>
+        // Flatpickr for Add Modal
+        flatpickr("#add_start_date", { 
+            dateFormat: "Y-m-d", 
+            defaultDate: "2026-02-10",
+            minDate: "2026-01-01"
+        });
+        
+        flatpickr("#add_pickup_time", { 
+            enableTime: true, 
+            noCalendar: true, 
+            dateFormat: "H:i", 
+            time_24hr: true,
+            defaultDate: "09:00"
+        });
+        
+        flatpickr("#add_end_date", { 
+            dateFormat: "Y-m-d", 
+            defaultDate: "2026-02-10",
+            minDate: "2026-01-01"
+        });
+        
+        flatpickr("#add_return_time", { 
+            enableTime: true, 
+            noCalendar: true, 
+            dateFormat: "H:i", 
+            time_24hr: true,
+            defaultDate: "17:00"
+        });
+    </script>
+    
+    <!-- Data from server -->
+    <script id="server-data" type="application/json">
+        {
+            "vehicleId": {{ vehicle.id }},
+            "vehicleName": "{{ vehicle.name }}",
+            "vehicleType": "{{ vehicle.type }}",
+            "vehicleCC": "{{ vehicle.cc }}",
+            "currentYear": {{ current_year }},
+            "currentMonth": {{ current_month }},
+            "calendarData": {{ calendar_data|tojson }},
+            "bookings": {{ bookings|tojson }}
+        }
+    </script>
+
+    <script>
+        // =====================================================
+        // ALPINE.JS BOOKING MANAGER - DENGAN MOBILE PRINT FIX
+        // =====================================================
+        function bookingManager() {
+            const serverData = JSON.parse(document.getElementById('server-data').textContent);
+            
+            return {
+                showAddModal: false,
+                showEditModal: false,
+                editBookingId: null,
+                editData: {
+                    customer_name: '',
+                    ic_number: '',
+                    nationality: 'Malaysian',
+                    customer_photo: '',
+                    location: '',
+                    destination: '',
+                    start_date: '',
+                    pickup_time: '',
+                    end_date: '',
+                    return_time: '',
+                    total_price: '',
+                    status: 'confirmed'
+                },
+                
+                // Calendar
+                vehicleId: serverData.vehicleId,
+                currentYear: serverData.currentYear,
+                currentMonth: serverData.currentMonth,
+                calendarData: serverData.calendarData.days || {},
+                calendarDays: [],
+                
+                // Bookings and Filters
+                allBookings: serverData.bookings,
+                filteredBookings: [],
+                searchName: '',
+                filterMonth: '',
+                filterYear: '',
+                filterStatus: '',
+                availableYears: [],
+                
+                init: function() {
+                    this.currentYear = serverData.currentYear;
+                    this.currentMonth = serverData.currentMonth;
+                    this.generateCalendar();
+                    this.filteredBookings = this.allBookings;
+                    this.extractAvailableYears();
+                },
+                
+                getAvailableYears: function() {
+                    const years = [];
+                    for (let i = 2026; i <= 2030; i++) {
+                        years.push(i);
+                    }
+                    return years;
+                },
+                
+                extractAvailableYears: function() {
+                    const years = new Set();
+                    this.allBookings.forEach(booking => {
+                        const year = booking.start_date.split('-')[0];
+                        years.add(year);
+                    });
+                    this.availableYears = Array.from(years).sort().reverse();
+                },
+                
+                filterBookings: function() {
+                    this.filteredBookings = this.allBookings.filter(booking => {
+                        if (this.searchName && !booking.customer_name.toLowerCase().includes(this.searchName.toLowerCase())) {
+                            return false;
+                        }
+                        if (this.filterMonth) {
+                            const bookingMonth = booking.start_date.split('-')[1];
+                            if (bookingMonth !== this.filterMonth) return false;
+                        }
+                        if (this.filterYear) {
+                            const bookingYear = booking.start_date.split('-')[0];
+                            if (bookingYear !== this.filterYear) return false;
+                        }
+                        if (this.filterStatus && booking.status !== this.filterStatus) {
+                            return false;
+                        }
+                        return true;
+                    });
+                },
+                
+                generateCalendar: function() {
+                    this.currentMonth = parseInt(this.currentMonth);
+                    this.currentYear = parseInt(this.currentYear);
+                    
+                    const firstDay = new Date(this.currentYear, this.currentMonth - 1, 1);
+                    const lastDay = new Date(this.currentYear, this.currentMonth, 0);
+                    const daysInMonth = lastDay.getDate();
+                    const startingDayOfWeek = firstDay.getDay();
+                    
+                    const today = new Date(2026, 1, 10);
+                    today.setHours(0, 0, 0, 0);
+                    const isCurrentMonth = today.getFullYear() === this.currentYear && (today.getMonth() + 1) === this.currentMonth;
+                    
+                    this.calendarDays = [];
+                    
+                    for (let i = 0; i < startingDayOfWeek; i++) {
+                        this.calendarDays.push({ inMonth: false });
+                    }
+                    
+                    for (let day = 1; day <= daysInMonth; day++) {
+                        const status = this.calendarData[day] || 'available';
+                        const isToday = isCurrentMonth && today.getDate() === day;
+                        
+                        this.calendarDays.push({
+                            day: day,
+                            date: this.currentYear + '-' + String(this.currentMonth).padStart(2, '0') + '-' + String(day).padStart(2, '0'),
+                            status: status,
+                            inMonth: true,
+                            isToday: isToday
+                        });
+                    }
+                },
+                
+                loadCalendarData: async function() {
+                    try {
+                        const response = await fetch('/admin/vehicle/' + this.vehicleId + '/calendar/' + this.currentYear + '/' + this.currentMonth);
+                        const data = await response.json();
+                        this.calendarData = data.days || {};
+                        this.generateCalendar();
+                    } catch (error) {
+                        console.error('Error loading calendar:', error);
+                    }
+                },
+                
+                previousMonth: function() {
+                    this.currentMonth = parseInt(this.currentMonth);
+                    this.currentYear = parseInt(this.currentYear);
+                    
+                    if (this.currentMonth === 1) {
+                        this.currentMonth = 12;
+                        this.currentYear--;
+                    } else {
+                        this.currentMonth--;
+                    }
+                    this.loadCalendarData();
+                },
+                
+                nextMonth: function() {
+                    this.currentMonth = parseInt(this.currentMonth);
+                    this.currentYear = parseInt(this.currentYear);
+                    
+                    if (this.currentMonth === 12) {
+                        this.currentMonth = 1;
+                        this.currentYear++;
+                    } else {
+                        this.currentMonth++;
+                    }
+                    this.loadCalendarData();
+                },
+                
+                getMonthYearText: function() {
+                    const months = ['January', 'February', 'March', 'April', 'May', 'June', 
+                                  'July', 'August', 'September', 'October', 'November', 'December'];
+                    return months[this.currentMonth - 1] + ' ' + this.currentYear;
+                },
+                
+                openEditModal: function(booking) {
+                    this.editBookingId = booking.id;
+                    this.editData = {
+                        customer_name: booking.customer_name,
+                        ic_number: booking.ic_number,
+                        nationality: booking.nationality || 'Malaysian',
+                        customer_photo: booking.customer_photo || '',
+                        location: booking.location,
+                        destination: booking.destination,
+                        start_date: booking.start_date,
+                        pickup_time: booking.pickup_time,
+                        end_date: booking.end_date,
+                        return_time: booking.return_time,
+                        total_price: booking.total_price || '',
+                        status: booking.status
+                    };
+                    this.showEditModal = true;
+                },
+                
+                // =====================================================
+                // PRINT RECEIPT FUNCTION - MOBILE OPTIMIZED
+                // =====================================================
+                printReceipt: function(booking) {
+                    // Deteksi mobile device
+                    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                    
+                    // Kalkulasi data
+                    const startDate = new Date(booking.start_date + ' ' + booking.pickup_time);
+                    const endDate = new Date(booking.end_date + ' ' + booking.return_time);
+                    const duration = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
+                    
+                    const vehicleName = serverData.vehicleName || 'N/A';
+                    const vehicleType = serverData.vehicleType || 'N/A';
+                    const vehicleCC = serverData.vehicleCC || 'N/A';
+                    
+                    const pickupDateTime = startDate.toLocaleString('en-MY', { 
+                        year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' 
+                    });
+                    const returnDateTime = endDate.toLocaleString('en-MY', { 
+                        year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' 
+                    });
+                    const currentDate = new Date(2026, 1, 10).toLocaleDateString('en-MY', { 
+                        year: 'numeric', month: 'long', day: 'numeric' 
+                    });
+
+                    // Generate HTML
+                    let receiptHTML = '<!DOCTYPE html><html><head><meta charset="UTF-8">';
+                    receiptHTML += '<meta name="viewport" content="width=device-width, initial-scale=1.0">';
+                    receiptHTML += '<title>Receipt #' + (booking.booking_number || booking.id) + '</title>';
+                    
+                    // STYLES
+                    receiptHTML += '<style>';
+                    receiptHTML += 'body { font-family: Roboto, Arial, Helvetica, sans-serif; background: #f2f3f3; margin: 0; padding: 20px; color: #434343; -webkit-print-color-adjust: exact; }';
+                    receiptHTML += '@media print { body { background: #fff; padding: 0; } .no-print { display: none !important; } @page { margin: 0.5cm; size: A4; } }';
+                    receiptHTML += '.container { max-width: 750px; margin: 0 auto; background: #fff; padding: 40px; border-radius: 4px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }';
+                    receiptHTML += '@media (max-width: 768px) { body { padding: 10px; } .container { padding: 20px; } .header { flex-direction: column; gap: 15px; } .receipt-meta { text-align: left; } .purchase-table { font-size: 12px; } .purchase-table th, .purchase-table td { padding: 8px 6px; } }';
+                    receiptHTML += '.header { display: flex; justify-content: space-between; border-bottom: 2px solid #eee; padding-bottom: 20px; margin-bottom: 20px; }';
+                    receiptHTML += '.logo-section { font-size: 24px; font-weight: 900; color: #1ba0e2; letter-spacing: -1px; }';
+                    receiptHTML += '.logo-sub { font-size: 12px; color: #666; font-weight: normal; letter-spacing: 0; }';
+                    receiptHTML += '.receipt-meta { text-align: right; }';
+                    receiptHTML += '.receipt-title { font-size: 20px; font-weight: bold; color: #000; text-transform: uppercase; margin-bottom: 5px; }';
+                    receiptHTML += '.meta-row { font-size: 12px; color: #666; margin-bottom: 2px; }';
+                    receiptHTML += '.status-box { display: inline-block; padding: 5px 15px; border-radius: 4px; font-weight: bold; font-size: 14px; margin-top: 10px; border: 1px solid; }';
+                    receiptHTML += '.status-confirmed { background: #e6fffa; color: #00a09d; border-color: #00a09d; }';
+                    receiptHTML += '.status-pending { background: #fffaf0; color: #dd6b20; border-color: #dd6b20; }';
+                    receiptHTML += '.status-cancelled { background: #fff5f5; color: #e53e3e; border-color: #e53e3e; }';
+                    receiptHTML += '.section-label { font-size: 12px; font-weight: 700; color: #999; text-transform: uppercase; margin: 25px 0 10px 0; letter-spacing: 0.5px; }';
+                    receiptHTML += '.details-table { width: 100%; border-collapse: collapse; }';
+                    receiptHTML += '.details-table td { padding: 8px 0; vertical-align: top; font-size: 14px; }';
+                    receiptHTML += '.label-col { width: 30%; color: #666; font-weight: 500; }';
+                    receiptHTML += '.value-col { width: 70%; color: #000; font-weight: 600; word-break: break-word; }';
+                    receiptHTML += '.purchase-table { width: 100%; border-collapse: collapse; margin-top: 10px; border: 1px solid #eee; }';
+                    receiptHTML += '.purchase-table th { background: #f7f9fa; text-align: left; padding: 12px; font-size: 12px; color: #666; font-weight: 600; border-bottom: 1px solid #eee; }';
+                    receiptHTML += '.purchase-table td { padding: 15px 12px; font-size: 14px; border-bottom: 1px solid #eee; vertical-align: top; }';
+                    receiptHTML += '.item-title { font-weight: bold; color: #1ba0e2; font-size: 15px; margin-bottom: 4px; }';
+                    receiptHTML += '.item-desc { font-size: 12px; color: #666; line-height: 1.4; }';
+                    receiptHTML += '.price-col { text-align: right; font-weight: bold; }';
+                    receiptHTML += '.photo-container { margin-top: 10px; border: 1px solid #ddd; padding: 5px; display: inline-block; background: #fff; }';
+                    receiptHTML += '.cust-photo { max-width: 150px; max-height: 150px; display: block; }';
+                    receiptHTML += '.terms-box { background: #f9f9f9; padding: 15px; font-size: 11px; color: #666; line-height: 1.5; margin-top: 30px; border-left: 3px solid #ccc; }';
+                    receiptHTML += '.footer { margin-top: 30px; text-align: center; font-size: 11px; color: #999; border-top: 1px solid #eee; padding-top: 15px; }';
+                    receiptHTML += '.button-group { margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap; }';
+                    receiptHTML += '.btn { border: none; padding: 12px 24px; font-weight: bold; border-radius: 4px; cursor: pointer; font-size: 14px; transition: all 0.3s; flex: 1; min-width: 140px; }';
+                    receiptHTML += '.btn-print { background: #ff5e1f; color: white; }';
+                    receiptHTML += '.btn-print:hover { background: #e04a0f; }';
+                    receiptHTML += '.btn-share { background: #1ba0e2; color: white; }';
+                    receiptHTML += '.btn-share:hover { background: #1589c9; }';
+                    receiptHTML += '.btn-download { background: #28a745; color: white; }';
+                    receiptHTML += '.btn-download:hover { background: #218838; }';
+                    receiptHTML += '@media (max-width: 768px) { .button-group { flex-direction: column; } .btn { min-width: 100%; } }';
+                    receiptHTML += '</style>';
+                    
+                    // JAVASCRIPT untuk mobile functionality
+                    receiptHTML += '<script>';
+                    receiptHTML += 'function printReceipt() { if (window.print) { window.print(); } else { alert("Print not supported. Please use Share or Download button."); } }';
+                    
+                    receiptHTML += 'function shareReceipt() {';
+                    receiptHTML += '  const title = "Receipt #' + (booking.booking_number || booking.id) + '";';
+                    receiptHTML += '  const text = "VehicleRent - ' + booking.customer_name + ' - ' + vehicleName + '";';
+                    receiptHTML += '  if (navigator.share) {';
+                    receiptHTML += '    navigator.share({ title: title, text: text, url: window.location.href }).catch(err => console.log("Share failed:", err));';
+                    receiptHTML += '  } else {';
+                    receiptHTML += '    if (navigator.clipboard) { navigator.clipboard.writeText(window.location.href).then(() => alert("Link copied to clipboard!")); }';
+                    receiptHTML += '    else { alert("Share not supported on this device"); }';
+                    receiptHTML += '  }';
+                    receiptHTML += '}';
+                    
+                    receiptHTML += 'function downloadPDF() {';
+                    receiptHTML += '  setTimeout(function() {';
+                    receiptHTML += '    if (window.print) {';
+                    receiptHTML += '      window.print();';
+                    receiptHTML += '    } else {';
+                    receiptHTML += '      alert("Please use your browser menu to save as PDF or print this page.");';
+                    receiptHTML += '    }';
+                    receiptHTML += '  }, 300);';
+                    receiptHTML += '}';
+                    
+                    // Fungsi baru untuk save PDF dengan nama file custom
+                    receiptHTML += 'function savePDF() {';
+                    receiptHTML += '  const filename = "Receipt_' + (booking.booking_number || ('BK-' + String(booking.id).padStart(6, '0'))).replace(/[^a-zA-Z0-9-]/g, '_') + '_' + booking.customer_name.replace(/[^a-zA-Z0-9]/g, '_') + '.pdf";';
+                    receiptHTML += '  document.title = filename.replace(".pdf", "");';
+                    receiptHTML += '  setTimeout(function() {';
+                    receiptHTML += '    if (window.print) {';
+                    receiptHTML += '      window.print();';
+                    receiptHTML += '    } else {';
+                    receiptHTML += '      alert("Please use your browser menu to save as PDF. Suggested filename: " + filename);';
+                    receiptHTML += '    }';
+                    receiptHTML += '  }, 300);';
+                    receiptHTML += '}';
+                    
+                    receiptHTML += '<\/script>';
+                    receiptHTML += '</head><body>';
+                    
+                    // BUTTONS (adaptive untuk mobile/desktop)
+                    receiptHTML += '<div class="button-group no-print">';
+                    if (isMobile) {
+                        receiptHTML += '<button class="btn btn-share" onclick="shareReceipt()">📤 Share</button>';
+                        receiptHTML += '<button class="btn btn-download" onclick="downloadPDF()">📄 Share as PDF</button>';
+                    } else {
+                        receiptHTML += '<button class="btn btn-print" onclick="printReceipt()">🖨️ Print Receipt</button>';
+                        receiptHTML += '<button class="btn btn-download" onclick="savePDF()">💾 Save as PDF</button>';
+                    }
+                    receiptHTML += '</div>';
+                    
+                    // CONTAINER
+                    receiptHTML += '<div class="container">';
+                    
+                    // HEADER
+                    receiptHTML += '<div class="header">';
+                    receiptHTML += '<div><div class="logo-section">VehicleRent</div><div class="logo-sub">Motorcycle Rental Service</div></div>';
+                    receiptHTML += '<div class="receipt-meta">';
+                    receiptHTML += '<div class="receipt-title">RECEIPT</div>';
+                    receiptHTML += '<div class="meta-row">Booking #: <strong>' + (booking.booking_number || ('BK-' + String(booking.id).padStart(6, '0'))) + '</strong></div>';
+                    receiptHTML += '<div class="meta-row">Date: ' + currentDate + '</div>';
+                    
+                    let statusClass = 'status-pending';
+                    if(booking.status === 'confirmed') statusClass = 'status-confirmed';
+                    if(booking.status === 'cancelled') statusClass = 'status-cancelled';
+                    
+                    receiptHTML += '<div class="status-box ' + statusClass + '">' + booking.status.toUpperCase() + '</div>';
+                    receiptHTML += '</div></div>';
+                    
+                    // CUSTOMER DETAILS
+                    receiptHTML += '<div class="section-label">Customer Details</div>';
+                    receiptHTML += '<table class="details-table">';
+                    receiptHTML += '<tr><td class="label-col">Name</td><td class="value-col">' + booking.customer_name + '</td></tr>';
+                    if (booking.ic_number) receiptHTML += '<tr><td class="label-col">IC / ID Number</td><td class="value-col">' + booking.ic_number + '</td></tr>';
+                    if (booking.nationality) receiptHTML += '<tr><td class="label-col">Nationality</td><td class="value-col">' + booking.nationality + '</td></tr>';
+                    if (booking.location) receiptHTML += '<tr><td class="label-col">Pickup Location</td><td class="value-col">' + booking.location + '</td></tr>';
+                    if (booking.destination) receiptHTML += '<tr><td class="label-col">Destination</td><td class="value-col">' + booking.destination + '</td></tr>';
+                    if (booking.customer_photo) {
+                        receiptHTML += '<tr><td class="label-col">Verification Photo</td><td class="value-col">';
+                        receiptHTML += '<div class="photo-container"><img src="' + booking.customer_photo + '" class="cust-photo" alt="Customer Photo"></div>';
+                        receiptHTML += '</td></tr>';
+                    }
+                    receiptHTML += '</table>';
+                    
+                    // PURCHASE DETAILS
+                    receiptHTML += '<div class="section-label">Purchase Details</div>';
+                    receiptHTML += '<table class="purchase-table">';
+                    receiptHTML += '<thead><tr><th>Item Description</th><th>Qty (Days)</th><th class="price-col">Total</th></tr></thead><tbody>';
+                    receiptHTML += '<tr><td>';
+                    receiptHTML += '<div class="item-title">' + vehicleName + '</div>';
+                    receiptHTML += '<div class="item-desc">Type: ' + vehicleType + ' | Engine: ' + vehicleCC + ' CC</div>';
+                    receiptHTML += '<div class="item-desc" style="margin-top: 5px;">Pickup: ' + pickupDateTime + '</div>';
+                    receiptHTML += '<div class="item-desc">Return: ' + returnDateTime + '</div>';
+                    receiptHTML += '</td><td>' + duration + '</td>';
+                    
+                    let displayPrice = booking.total_price ? 'RM ' + parseFloat(booking.total_price).toFixed(2) : '-';
+                    receiptHTML += '<td class="price-col">' + displayPrice + '</td></tr>';
+                    
+                    if (booking.total_price) {
+                        receiptHTML += '<tr><td colspan="2" style="text-align: right; font-weight: bold; color: #666; padding-right: 20px;">TOTAL PAYMENT</td>';
+                        receiptHTML += '<td class="price-col" style="font-size: 16px; color: #1ba0e2;">' + displayPrice + '</td></tr>';
+                    }
+                    receiptHTML += '</tbody></table>';
+                    
+                    // TERMS
+                    receiptHTML += '<div class="terms-box"><strong>Terms & Conditions:</strong><br>';
+                    receiptHTML += '1. Customer must present valid IC and driving license upon pickup<br>';
+                    receiptHTML += '2. Late return will incur additional charges<br>';
+                    receiptHTML += '3. Vehicle must be returned in the same condition<br>';
+                    receiptHTML += '4. Customer is responsible for any damage or theft during rental period<br>';
+                    receiptHTML += '5. Fuel tank must be refilled to the same level as pickup</div>';
+                    
+                    // FOOTER
+                    receiptHTML += '<div class="footer"><strong>VehicleRent Motorcycle Rental</strong><br>';
+                    receiptHTML += 'Thank you for choosing our service!<br>';
+                    receiptHTML += 'For inquiries, please contact us through our official channels.</div>';
+                    
+                    receiptHTML += '</div></body></html>';
+                    
+                    // Buka window baru
+                    const printWindow = window.open('', '_blank', 'width=800,height=600');
+                    if (printWindow) {
+                        printWindow.document.write(receiptHTML);
+                        printWindow.document.close();
+                    } else {
+                        alert('Please allow pop-ups to view receipt');
+                    }
+                }
+            };
+        }
+    </script>
+</body>
+</html>

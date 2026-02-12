@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Vehicle - Admin Panel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Work Sans', sans-serif; }
+        h1, h2, h3 { font-family: 'Sora', sans-serif; }
+        
+        .file-upload-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            width: 100%;
+        }
+        
+        .file-upload-input {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+        
+        .image-preview {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .image-preview-item {
+            position: relative;
+            border-radius: 0.75rem;
+            overflow: hidden;
+            aspect-ratio: 16/9;
+        }
+        
+        .image-preview-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .image-preview-item .remove-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background: rgba(239, 68, 68, 0.9);
+            color: white;
+            border-radius: 9999px;
+            width: 2rem;
+            height: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .image-preview-item .remove-btn:hover {
+            background: rgba(220, 38, 38, 1);
+            transform: scale(1.1);
+        }
+        
+        .current-image-badge {
+            position: absolute;
+            bottom: 0.5rem;
+            left: 0.5rem;
+            background: rgba(59, 130, 246, 0.9);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <nav class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-800 rounded-xl flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold text-gray-900">VehicleRent Admin</h1>
+                        <p class="text-xs text-gray-500">Edit Vehicle</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="/admin/vehicle/{{ vehicle.id }}" class="text-sm text-gray-600 hover:text-blue-600 font-medium transition">
+                        ← Back to Details
+                    </a>
+                    <a href="/logout" class="text-sm text-red-600 hover:text-red-700 font-semibold transition">
+                        Logout
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div class="mb-6 space-y-3">
+                {% for category, message in messages %}
+                <div class="p-4 rounded-xl {% if category == 'error' %}bg-red-50 border border-red-200 text-red-700{% elif category == 'success' %}bg-green-50 border border-green-200 text-green-700{% else %}bg-blue-50 border border-blue-200 text-blue-700{% endif %}">
+                    <p class="font-semibold">{{ message }}</p>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        {% endwith %}
+
+        <div class="bg-white rounded-2xl shadow-lg p-8">
+            <div class="mb-8">
+                <h2 class="text-3xl font-bold text-gray-900 mb-2">Edit Vehicle</h2>
+                <p class="text-gray-600">Update the details for {{ vehicle.name }}</p>
+            </div>
+
+            <form method="POST" enctype="multipart/form-data" class="space-y-6">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Vehicle Name *</label>
+                    <input type="text" 
+                           name="name" 
+                           value="{{ vehicle.name }}"
+                           required
+                           class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        🚗 License Plate Number * 
+                        <span class="text-xs font-normal text-gray-500">(Admin Only)</span>
+                    </label>
+                    <input type="text" 
+                           name="license_plate" 
+                           value="{{ vehicle.license_plate or '' }}"
+                           required
+                           placeholder="e.g., ABC1234"
+                           class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition uppercase">
+                    <p class="text-xs text-gray-500 mt-2">⚠️ This information is only visible in admin panel</p>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Category *</label>
+                    <select name="category" 
+                            required
+                            class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition">
+                        <option value="Motor" {% if vehicle.category == 'Motor' %}selected{% endif %}>🏍️ Motorcycle</option>
+                        <option value="Mobil" {% if vehicle.category == 'Mobil' %}selected{% endif %}>🚗 Car</option>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Type *</label>
+                        <select name="type" 
+                                required
+                                class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition">
+                            <optgroup label="Motor">
+                                <option value="Scooter" {% if vehicle.type == 'Scooter' %}selected{% endif %}>Scooter</option>
+                                <option value="Sport" {% if vehicle.type == 'Sport' %}selected{% endif %}>Sport</option>
+                                <option value="Cruiser" {% if vehicle.type == 'Cruiser' %}selected{% endif %}>Cruiser</option>
+                                <option value="Standard" {% if vehicle.type == 'Standard' %}selected{% endif %}>Standard</option>
+                                <option value="Adventure" {% if vehicle.type == 'Adventure' %}selected{% endif %}>Adventure</option>
+                            </optgroup>
+                            <optgroup label="Mobil">
+                                <option value="Sedan" {% if vehicle.type == 'Sedan' %}selected{% endif %}>Sedan</option>
+                                <option value="SUV" {% if vehicle.type == 'SUV' %}selected{% endif %}>SUV</option>
+                                <option value="MPV" {% if vehicle.type == 'MPV' %}selected{% endif %}>MPV</option>
+                                <option value="Hatchback" {% if vehicle.type == 'Hatchback' %}selected{% endif %}>Hatchback</option>
+                                <option value="Van" {% if vehicle.type == 'Van' %}selected{% endif %}>Van</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Engine CC *</label>
+                        <input type="text" 
+                               name="cc" 
+                               value="{{ vehicle.cc }}"
+                               required
+                               class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition">
+                    </div>
+                </div>
+
+                <div class="border-t pt-6">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4">💰 Rental Pricing</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Daily Rate (RM) *</label>
+                            <div class="relative">
+                                <span class="absolute left-4 top-3.5 text-gray-500 font-semibold">RM</span>
+                                <input type="number" 
+                                       name="price_day" 
+                                       value="{{ vehicle.price_day }}"
+                                       required
+                                       min="1"
+                                       step="0.01"
+                                       class="w-full pl-14 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">3-Day Rate (RM) *</label>
+                            <div class="relative">
+                                <span class="absolute left-4 top-3.5 text-gray-500 font-semibold">RM</span>
+                                <input type="number" 
+                                       name="price_3day" 
+                                       value="{{ vehicle.price_3day }}"
+                                       required
+                                       min="1"
+                                       step="0.01"
+                                       class="w-full pl-14 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Weekly Rate (RM) *</label>
+                            <div class="relative">
+                                <span class="absolute left-4 top-3.5 text-gray-500 font-semibold">RM</span>
+                                <input type="number" 
+                                       name="price_weekly" 
+                                       value="{{ vehicle.price_weekly }}"
+                                       required
+                                       min="1"
+                                       step="0.01"
+                                       class="w-full pl-14 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Monthly Rate (RM) *</label>
+                            <div class="relative">
+                                <span class="absolute left-4 top-3.5 text-gray-500 font-semibold">RM</span>
+                                <input type="number" 
+                                       name="price_monthly" 
+                                       value="{{ vehicle.price_monthly }}"
+                                       required
+                                       min="1"
+                                       step="0.01"
+                                       class="w-full pl-14 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {% if vehicle.image_url %}
+                <div class="border-t pt-6">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4">📷 Current Image</h3>
+                    <div class="image-preview">
+                        <div class="image-preview-item">
+                            <img src="{{ vehicle.image_url }}" alt="Current vehicle image">
+                            <div class="current-image-badge">Current</div>
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-3">
+                        ⚠️ Uploading a new image will replace the current image
+                    </p>
+                </div>
+                {% endif %}
+
+                <div class="{% if not vehicle.image_url %}border-t pt-6{% endif %}">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4">📸 {% if vehicle.image_url %}Replace{% else %}Upload{% endif %} Vehicle Image</h3>
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            Upload New Image (Max 1MB)
+                        </label>
+                        <div class="file-upload-wrapper">
+                            <button type="button" class="w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-xl hover:border-blue-500 transition text-gray-600 font-semibold flex items-center justify-center space-x-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                                </svg>
+                                <span>Choose New Image</span>
+                            </button>
+                            <input type="file" 
+                                   name="image" 
+                                   id="imageUpload"
+                                   accept="image/png,image/jpeg,image/jpg,image/webp"
+                                   class="file-upload-input"
+                                   onchange="handleImageUpload(event)">
+                        </div>
+                        <p class="text-xs text-gray-500 mt-2">
+                            ℹ️ Supported formats: PNG, JPG, JPEG, WEBP • Max 1MB
+                        </p>
+                    </div>
+                    
+                    <div id="imagePreview" class="image-preview"></div>
+                </div>
+
+                <div class="border-t pt-6">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4">📋 Terms and Conditions</h3>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            Rental Terms (Optional)
+                        </label>
+                        <textarea name="terms_and_conditions"
+                                  rows="8"
+                                  placeholder="Enter specific terms and conditions for this vehicle rental...&#10;&#10;Example:&#10;- Valid driving license required&#10;- Security deposit: RM 500&#10;- Fuel policy: Return with full tank&#10;- Late return charge: RM 50/hour&#10;- Damage waiver available"
+                                  class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition resize-y">{{ vehicle.terms_and_conditions or '' }}</textarea>
+                        <p class="text-xs text-gray-500 mt-2">
+                            💡 Add specific rental terms for this vehicle. This will be shown to customers during booking.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="flex space-x-4 pt-6 border-t">
+                    <button type="submit" 
+                            class="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold py-4 rounded-xl transition-all shadow-lg">
+                        Save Changes
+                    </button>
+                    <a href="/admin/vehicle/{{ vehicle.id }}" 
+                       class="px-8 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-4 rounded-xl transition text-center flex items-center justify-center">
+                        Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let selectedFile = null;
+        const MAX_FILE_SIZE = 1 * 1024 * 1024; // 1MB
+
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            
+            if (!file) {
+                return;
+            }
+            
+            // Check file size
+            if (file.size > MAX_FILE_SIZE) {
+                alert(`File "${file.name}" is larger than 1MB. Please choose a smaller image.`);
+                event.target.value = '';
+                return;
+            }
+            
+            // Check file type
+            if (!file.type.match('image/(png|jpeg|jpg|webp)')) {
+                alert(`File "${file.name}" is not a supported image format.`);
+                event.target.value = '';
+                return;
+            }
+            
+            // Store file
+            selectedFile = file;
+            updateImagePreview();
+        }
+        
+        function removeImage() {
+            selectedFile = null;
+            document.getElementById('imageUpload').value = '';
+            updateImagePreview();
+        }
+        
+        function updateImagePreview() {
+            const previewContainer = document.getElementById('imagePreview');
+            previewContainer.innerHTML = '';
+            
+            if (selectedFile) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const div = document.createElement('div');
+                    div.className = 'image-preview-item';
+                    div.innerHTML = `
+                        <img src="${e.target.result}" alt="Preview">
+                        <div class="remove-btn" onclick="removeImage()">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </div>
+                    `;
+                    previewContainer.appendChild(div);
+                };
+                reader.readAsDataURL(selectedFile);
+            }
+        }
+    </script>
+</body>
+</html>

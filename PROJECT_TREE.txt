@@ -1,0 +1,31 @@
+.
+|____.env.example
+|____.gitignore
+|____CHANGELOG.md
+|____DEPLOYMENT_GUIDE.md
+|____FILE_STRUCTURE.md
+|____IMPLEMENTATION_CHECKLIST.md
+|____IMPLEMENTATION_GUIDE.md
+|____INDEX.md
+|____LICENSE
+|____PACKAGE_CONTENTS.md
+|____PROJECT_TREE.txt
+|____QUICKSTART.md
+|____README.md
+|____START_HERE.md
+|____TEMPLATE_UPDATE_GUIDE.md
+|____app.py
+|____backup.sh
+|____migrate_database.py
+|____requirements.txt
+|____setup.sh
+|____static
+| |____uploads
+| | |____vehicles
+| | | |____.gitkeep
+|____templates
+| |____admin_all_bookings.html
+| |____print_bookings.html
+|____{templates,static
+| |____uploads
+| | |____vehicles}

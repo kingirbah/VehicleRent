@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Corporate Bookings Report - VehicleRent</title>
+    <style>
+        /* --- ULTRA-CLEAN RESET & VARIABLES --- */
+        :root {
+            --text-main: #111827;    /* Hitam pekat untuk data utama */
+            --text-sub: #6b7280;     /* Abu-abu medium untuk label */
+            --border-light: #f3f4f6; /* Garis sangat tipis */
+            --bg-body: #ffffff;
+        }
+
+        * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-print-color-adjust: exact; /* Untuk Chrome/Safari/Edge lama */
+    print-color-adjust: exact;         /* Properti Standar CSS */
+}
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            line-height: 1.5;
+            font-size: 13px;
+            padding: 60px;
+            max-width: 950px;
+            margin: 0 auto;
+        }
+
+        /* --- HEADER --- */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 60px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .brand h1 {
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            color: var(--text-main);
+            margin-bottom: 2px;
+        }
+
+        .brand p {
+            font-size: 11px;
+            color: var(--text-sub);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .doc-meta {
+            text-align: right;
+            font-size: 12px;
+        }
+
+        .meta-label {
+            color: var(--text-sub);
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .meta-val {
+            font-weight: 500;
+            color: var(--text-main);
+        }
+
+        /* --- STATS DASHBOARD (FLOATING) --- */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 40px;
+            margin-bottom: 70px;
+        }
+
+        .stat-item h3 {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--text-sub);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-item .value {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--text-main);
+            line-height: 1;
+            letter-spacing: -1px;
+        }
+
+        /* --- TABLE STYLING --- */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 80px;
+        }
+
+        th {
+            text-align: left;
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--text-sub);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        td {
+            padding: 18px 0;
+            border-bottom: 1px solid var(--border-light);
+            vertical-align: top;
+        }
+
+        /* Tipografi Sel Tabel */
+        .cell-main {
+            display: block;
+            font-weight: 500;
+            color: var(--text-main);
+            margin-bottom: 3px;
+        }
+
+        .cell-sub {
+            display: block;
+            font-size: 12px;
+            color: var(--text-sub);
+        }
+
+        .cell-mono {
+            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 11px;
+            color: var(--text-sub);
+        }
+
+        /* --- STATUS DOT INDICATORS --- */
+        .status-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end; /* Rata kanan */
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-main);
+        }
+
+        .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-confirmed .dot { background-color: #10b981; } /* Green */
+        .status-pending .dot { background-color: #f59e0b; }   /* Orange */
+        .status-completed .dot { background-color: #3b82f6; } /* Blue */
+        .status-cancelled .dot { background-color: #ef4444; } /* Red */
+
+        /* --- FOOTER & SIGNATURES --- */
+        .footer-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+
+        .signatures {
+            display: flex;
+            gap: 60px;
+        }
+
+        .sig-box {
+            width: 160px;
+        }
+
+        .sig-line {
+            border-bottom: 1px solid #d1d5db;
+            margin-bottom: 10px;
+            height: 40px;
+        }
+
+        .sig-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            color: var(--text-sub);
+            font-weight: 600;
+        }
+
+        .copyright {
+            text-align: right;
+            font-size: 10px;
+            color: #9ca3af;
+        }
+
+        /* --- PRINT OPTIMIZATION --- */
+        @media print {
+            body { padding: 0; margin: 0; }
+            @page { margin: 1.5cm; size: A4; }
+            .no-print { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="brand">
+            <h1>VehicleRent</h1>
+            <p>Fleet Management Report</p>
+        </div>
+        <div class="doc-meta">
+            <div class="meta-label">Generated On</div>
+            <div class="meta-val">{{ report_date }}</div>
+            {% if current_status %}
+            <div class="meta-label" style="margin-top: 5px;">Filter</div>
+            <div class="meta-val">{{ current_status|title }}</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-item">
+            <h3>Total Bookings</h3>
+            <div class="value">{{ stats.total }}</div>
+        </div>
+        <div class="stat-item">
+            <h3>Confirmed</h3>
+            <div class="value" style="color: #059669;">{{ stats.confirmed }}</div>
+        </div>
+        <div class="stat-item">
+            <h3>Pending</h3>
+            <div class="value" style="color: #d97706;">{{ stats.pending }}</div>
+        </div>
+        <div class="stat-item">
+            <h3>Revenue (Completed)</h3>
+            <div class="value" style="color: #2563eb;">{{ stats.completed }}</div>
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 15%;">Reference ID</th>
+                <th style="width: 25%;">Customer Details</th>
+                <th style="width: 25%;">Vehicle Asset</th>
+                <th style="width: 20%;">Rental Period</th>
+                <th style="width: 15%; text-align: right;">Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if bookings %}
+                {% for booking in bookings %}
+                <tr>
+                    <td>
+                        <span class="cell-main cell-mono">#{{ booking.booking_number }}</span>
+                        <span class="cell-sub">{{ booking.created_at[:10] }}</span>
+                    </td>
+                    
+                    <td>
+                        <span class="cell-main">{{ booking.customer_name }}</span>
+                        {% if booking.nationality %}
+                        <span class="cell-sub">{{ booking.nationality }}</span>
+                        {% endif %}
+                        {% if booking.ic_number %}
+                        <span class="cell-mono">ID: {{ booking.ic_number }}</span>
+                        {% endif %}
+                    </td>
+                    
+                    <td>
+                        <span class="cell-main">{{ booking.vehicle_name }}</span>
+                        <span class="cell-sub">{{ booking.license_plate }}</span>
+                    </td>
+                    
+                    <td>
+                        <span class="cell-main" style="font-size: 12px;">{{ booking.start_date }}</span>
+                        <span class="cell-sub" style="font-size: 10px; margin-bottom: 2px;">TO</span>
+                        <span class="cell-main" style="font-size: 12px;">{{ booking.end_date }}</span>
+                    </td>
+                    
+                    <td>
+                        {% if booking.status == 'confirmed' %}
+                        <div class="status-wrapper status-confirmed"><span class="dot"></span>Confirmed</div>
+                        {% elif booking.status == 'pending' %}
+                        <div class="status-wrapper status-pending"><span class="dot"></span>Pending</div>
+                        {% elif booking.status == 'completed' %}
+                        <div class="status-wrapper status-completed"><span class="dot"></span>Completed</div>
+                        {% elif booking.status == 'cancelled' %}
+                        <div class="status-wrapper status-cancelled"><span class="dot"></span>Cancelled</div>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="5" style="text-align: center; padding: 60px 0; color: #9ca3af;">
+                        No data available for the selected criteria.
+                    </td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
+
+    <div class="footer-section">
+        <div class="signatures">
+            <div class="sig-box">
+                <div class="sig-line"></div>
+                <div class="sig-label">Prepared By</div>
+            </div>
+            <div class="sig-box">
+                <div class="sig-line"></div>
+                <div class="sig-label">Approved By</div>
+            </div>
+        </div>
+        <div class="copyright">
+            <p>&copy; 2026 VehicleRent Systems</p>
+            <p>Confidential Internal Report</p>
+        </div>
+    </div>
+
+    <script>
+        window.onload = function() {
+            // Uncomment line below to auto-print when page loads
+            // window.print();
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VehicleRent - Motorcycle Rental Catalog</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body { 
+            font-family: 'Work Sans', sans-serif;
+            background: #FAFBFC;
+        }
+        
+        h1, h2, h3, .font-display { 
+            font-family: 'Sora', sans-serif; 
+        }
+        
+        .gradient-hero { 
+            background: linear-gradient(135deg, #0052CC 0%, #003D99 50%, #00266D 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .gradient-hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+        
+        .bike-card {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 2px solid #F0F2F5;
+        }
+        
+        .bike-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0,82,204,0.12);
+            border-color: #0052CC;
+        }
+        
+        .status-badge {
+            backdrop-filter: blur(12px);
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+        
+        .price-tag {
+            background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .search-box {
+            background: white;
+            box-shadow: 0 10px 50px rgba(0,0,0,0.08);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #FFB800 0%, #FF9500 100%);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: scale(1.02);
+            box-shadow: 0 8px 20px rgba(255,184,0,0.4);
+        }
+        
+        .btn-select {
+            background: #0052CC;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-select:hover {
+            background: #003D99;
+            transform: scale(0.98);
+        }
+        
+        .modal-backdrop {
+            backdrop-filter: blur(8px);
+            background: rgba(0,0,0,0.6);
+        }
+        
+        [x-cloak] { display: none !important; }
+        
+        .bike-image {
+            background: linear-gradient(135deg, #E8F0FE 0%, #F0F5FF 100%);
+        }
+        
+        .filter-btn {
+            transition: all 0.3s;
+        }
+        
+        .filter-btn.active {
+            background: linear-gradient(135deg, #0052CC 0%, #003D99 100%);
+            color: white;
+            font-weight: 700;
+            transform: scale(1.05);
+        }
+        
+        /* Custom scrollbar for modal */
+        .overflow-y-auto::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .overflow-y-auto::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        
+        .overflow-y-auto::-webkit-scrollbar-thumb {
+            background: #0052CC;
+            border-radius: 10px;
+        }
+        
+        .overflow-y-auto::-webkit-scrollbar-thumb:hover {
+            background: #003D99;
+        }
+        
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .animate-slide-up {
+            animation: slideUp 0.6s ease-out forwards;
+        }
+        
+        .bike-card:nth-child(1) { animation-delay: 0s; }
+        .bike-card:nth-child(2) { animation-delay: 0.1s; }
+        .bike-card:nth-child(3) { animation-delay: 0.2s; }
+        .bike-card:nth-child(4) { animation-delay: 0.3s; }
+        .bike-card:nth-child(5) { animation-delay: 0.4s; }
+        .bike-card:nth-child(6) { animation-delay: 0.5s; }
+        .bike-card:nth-child(7) { animation-delay: 0.6s; }
+        .bike-card:nth-child(8) { animation-delay: 0.7s; }
+        .bike-card:nth-child(9) { animation-delay: 0.8s; }
+    </style>
+</head>
+
+<body x-data="bookingSystem()">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm sticky top-0 z-50 border-b border-gray-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-800 rounded-xl flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                    </div>
+                    <h1 class="text-2xl font-display font-extrabold text-gray-900">VehicleRent</h1>
+                </div>
+                <a href="/login" class="text-xs font-semibold text-gray-400 hover:text-blue-600 transition uppercase tracking-wider">
+                    Admin Portal
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <div class="gradient-hero py-16 px-4 relative">
+        <div class="max-w-7xl mx-auto text-center relative z-10">
+            <h2 class="text-white text-4xl md:text-5xl font-display font-extrabold mb-3 leading-tight">
+                Rent a Motorcycle,<br>Go Anywhere
+            </h2>
+            <p class="text-blue-100 text-lg mb-12 max-w-2xl mx-auto">
+                Select your dates to check availability and explore our fleet
+            </p>
+            
+            <!-- Search Box -->
+            <div class="max-w-4xl mx-auto search-box rounded-3xl p-3">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div class="relative">
+                        <label class="block text-xs font-semibold text-gray-500 mb-2 text-left ml-4">Pickup Date & Time</label>
+                        <input type="text" 
+                               id="main_start" 
+                               class="w-full px-5 py-4 bg-gray-50 rounded-2xl outline-none text-sm font-semibold text-gray-800 focus:bg-gray-100 focus:ring-2 focus:ring-blue-500 transition" 
+                               placeholder="Select pickup date"
+                               value="{{ start_date }}">
+                    </div>
+                    
+                    <div class="relative">
+                        <label class="block text-xs font-semibold text-gray-500 mb-2 text-left ml-4">Return Date & Time</label>
+                        <input type="text" 
+                               id="main_end" 
+                               class="w-full px-5 py-4 bg-gray-50 rounded-2xl outline-none text-sm font-semibold text-gray-800 focus:bg-gray-100 focus:ring-2 focus:ring-blue-500 transition" 
+                               placeholder="Select return date"
+                               value="{{ end_date }}">
+                    </div>
+                    
+                    <div class="flex items-end">
+                        <button onclick="applySearch()" 
+                                class="w-full btn-primary text-white font-bold py-4 rounded-2xl shadow-lg">
+                            <span class="flex items-center justify-center space-x-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                </svg>
+                                <span>Search Bikes</span>
+                            </span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="max-w-7xl mx-auto px-4 pt-8 pb-4 -mt-8">
+        <div class="bg-white rounded-3xl shadow-lg p-6 border-2 border-gray-100">
+            <div class="mb-4">
+                <h3 class="text-lg font-bold text-gray-900 mb-4">🔍 Filter Vehicles</h3>
+                
+                <!-- Category Filter -->
+                <div>
+                    <p class="text-sm font-semibold text-gray-700 mb-2">Category:</p>
+                    <div class="flex flex-wrap gap-2">
+                        <a href="/?category=Motor" 
+                           class="filter-btn px-4 py-2 rounded-lg border-2 border-gray-300 text-sm font-semibold {% if current_category == 'Motor' %}active{% else %}hover:bg-gray-50{% endif %}">
+                            🏍️ Motorcycle
+                        </a>
+                        <a href="/?category=Mobil" 
+                           class="filter-btn px-4 py-2 rounded-lg border-2 border-gray-300 text-sm font-semibold {% if current_category == 'Mobil' %}active{% else %}hover:bg-gray-50{% endif %}">
+                            🚗 Car
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vehicles Grid -->
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        {% if vehicles %}
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {% for vehicle in vehicles %}
+            <div class="bike-card bg-white rounded-3xl overflow-hidden animate-slide-up">
+                <!-- Vehicle Image -->
+                <div class="bike-image h-56 relative overflow-hidden">
+                    {% if vehicle.image_url %}
+                    <img src="{{ vehicle.image_url }}" 
+                         alt="{{ vehicle.name }}" 
+                         class="w-full h-full object-cover transform hover:scale-110 transition-transform duration-700">
+                    {% else %}
+                    <div class="w-full h-full flex items-center justify-center">
+                        <svg class="w-24 h-24 text-blue-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Status Badge -->
+                    <div class="absolute top-4 right-4">
+                        {% if not vehicle.available %}
+                        <span class="status-badge bg-red-500/90 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg uppercase">
+                            Booked
+                        </span>
+                        {% else %}
+                        <span class="status-badge bg-green-500/90 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg uppercase">
+                            Available
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Vehicle Info -->
+                <div class="p-6">
+                    <div class="mb-4">
+                        <div class="flex items-center space-x-2 mb-2">
+                            <span class="inline-block px-3 py-1 bg-blue-50 text-blue-700 text-xs font-bold rounded-full uppercase">
+                                {{ vehicle.type }}
+                            </span>
+                            <span class="inline-block px-3 py-1 bg-purple-50 text-purple-700 text-xs font-bold rounded-full uppercase">
+                                {{ vehicle.category }}
+                            </span>
+                            <span class="inline-block px-3 py-1 bg-gray-100 text-gray-700 text-xs font-bold rounded-full">
+                                {{ vehicle.cc }}CC
+                            </span>
+                        </div>
+                        <h3 class="text-xl font-display font-bold text-gray-900">{{ vehicle.name }}</h3>
+                    </div>
+
+                    <!-- Pricing -->
+                    <div class="space-y-2 mb-6 pb-6 border-b border-gray-100">
+                        <div class="flex justify-between items-center text-sm">
+                            <span class="text-gray-500 font-medium">Daily Rate</span>
+                            <span class="font-bold text-gray-800">RM {{ vehicle.price_day }}</span>
+                        </div>
+                        <div class="flex justify-between items-center text-sm">
+                            <span class="text-gray-500 font-medium">Weekly Rate</span>
+                            <span class="font-bold text-gray-800">RM {{ vehicle.price_weekly }}</span>
+                        </div>
+                        <div class="flex justify-between items-center text-sm">
+                            <span class="text-gray-500 font-medium">Monthly Rate</span>
+                            <span class="font-bold text-gray-800">RM {{ vehicle.price_monthly }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Action Button -->
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <p class="text-xs text-gray-400 font-semibold uppercase">Starting From</p>
+                            <p class="text-3xl font-display font-black price-tag">
+                                RM {{ vehicle.price_day }}
+                                <span class="text-sm text-gray-400 font-normal">/day</span>
+                            </p>
+                        </div>
+                        
+                        {% if not vehicle.available %}
+                        <button class="bg-gray-100 text-gray-400 px-6 py-3 rounded-2xl font-bold cursor-not-allowed" disabled>
+                            Unavailable
+                        </button>
+                        {% else %}
+                        <button @click="openModal('{{ vehicle.name }}', {{ vehicle.price_day }}, {{ vehicle.id }}, `{{ vehicle.terms_and_conditions|replace('`', '')|replace('\n', '\\n')|safe }}`)" 
+                                class="btn-select text-white px-8 py-3 rounded-2xl font-bold shadow-lg">
+                            Select
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-20">
+            <svg class="w-24 h-24 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <h3 class="text-2xl font-bold text-gray-400 mb-2">No Vehicles Available</h3>
+            <p class="text-gray-400">Please check back later or adjust your filters</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Booking Modal -->
+    <div x-show="isOpen" 
+         x-cloak
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         class="fixed inset-0 modal-backdrop z-50 flex items-end md:items-center justify-center p-0 md:p-4">
+        
+        <div class="bg-white w-full max-w-2xl rounded-t-[2.5rem] md:rounded-[2.5rem] shadow-2xl relative max-h-[90vh] overflow-y-auto"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="transform translate-y-full md:translate-y-0 md:scale-95 opacity-0"
+             x-transition:enter-end="transform translate-y-0 md:scale-100 opacity-100"
+             @click.away="isOpen = false">
+            
+            <!-- Mobile Handle -->
+            <div class="sticky top-0 bg-white pt-4 pb-2 px-8 rounded-t-[2.5rem] md:rounded-t-[2.5rem] z-10">
+                <div class="w-12 h-1.5 bg-gray-300 rounded-full mx-auto mb-4 md:hidden"></div>
+                
+                <!-- Modal Header -->
+                <div class="mb-6">
+                    <h2 class="text-3xl font-display font-extrabold text-gray-900 mb-1">Book Your Ride</h2>
+                    <p class="text-gray-500 font-medium" x-text="selectedName"></p>
+                </div>
+            </div>
+
+            <div class="px-8 pb-8">
+                <!-- Vehicle & Date Summary -->
+                <div class="bg-gradient-to-br from-blue-50 to-blue-100 p-5 rounded-2xl mb-6">
+                    <div class="flex items-start space-x-4">
+                        <div class="bg-blue-600 text-white p-3 rounded-xl shadow-lg">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-xs text-blue-600 font-bold uppercase tracking-wide mb-1">Rental Period</p>
+                            <p class="text-sm font-bold text-blue-900" x-text="formatDateRange()"></p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-xs text-blue-600 font-bold uppercase mb-1">Daily Rate</p>
+                            <p class="text-xl font-display font-black text-blue-900" x-text="'RM ' + price"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Booking Form -->
+                <form @submit.prevent="sendWA()" class="space-y-4">
+                    <!-- Customer Name -->
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            Full Name *
+                        </label>
+                        <input type="text" 
+                               x-model="formData.customerName"
+                               required
+                               placeholder="Enter your full name"
+                               class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition">
+                    </div>
+
+                    <!-- IC Number -->
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            IC Number / Passport Number *
+                        </label>
+                        <input type="text" 
+                               x-model="formData.icNumber"
+                               required
+                               placeholder="e.g., 123456-78-9012 or A12345678"
+                               class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition">
+                    </div>
+
+                    <!-- Nationality -->
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            🌏 Nationality *
+                        </label>
+                        <select x-model="formData.nationality"
+                                required
+                                class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition">
+                            <option value="">Select your nationality</option>
+                            <option value="Malaysian">Malaysian</option>
+                            <option value="Singaporean">Singaporean</option>
+                            <option value="Indonesian">Indonesian</option>
+                            <option value="Thai">Thai</option>
+                            <option value="Filipino">Filipino</option>
+                            <option value="Vietnamese">Vietnamese</option>
+                            <option value="Chinese">Chinese</option>
+                            <option value="Indian">Indian</option>
+                            <option value="Japanese">Japanese</option>
+                            <option value="Korean">Korean</option>
+                            <option value="Australian">Australian</option>
+                            <option value="British">British</option>
+                            <option value="American">American</option>
+                            <option value="Canadian">Canadian</option>
+                            <option value="French">French</option>
+                            <option value="German">German</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+
+                    <!-- Pickup Location -->
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            Pickup Location *
+                        </label>
+                        <input type="text" 
+                               x-model="formData.location"
+                               required
+                               placeholder="Where should we deliver the motorcycle?"
+                               class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition">
+                    </div>
+
+                    <!-- Destination -->
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            Destination *
+                        </label>
+                        <input type="text" 
+                               x-model="formData.destination"
+                               required
+                               placeholder="Where are you planning to go?"
+                               class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition">
+                    </div>
+
+                    <!-- Terms and Conditions -->
+                    <div x-show="selectedTerms" x-cloak class="mb-4">
+                        <div class="bg-amber-50 border-2 border-amber-200 rounded-2xl p-5">
+                            <div class="flex items-start space-x-3">
+                                <svg class="w-6 h-6 text-amber-600 flex-shrink-0 mt-0.5"
+                                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                </svg>
+                                <div class="flex-1" x-data="{ expanded: false }">
+                                    <p class="text-sm font-bold text-amber-900 mb-2">
+                                        📋 Terms & Conditions
+                                    </p>
+                                    <div
+                                        :class="expanded ? 'max-h-none' : 'max-h-32'"
+                                        class="text-xs text-amber-800 whitespace-pre-wrap leading-relaxed
+                                               overflow-y-auto bg-white bg-opacity-50 p-3 rounded-lg
+                                               break-words transition-all duration-300"
+                                        style="word-break: break-word; overflow-wrap: anywhere;"
+                                        x-text="selectedTerms">
+                                    </div>
+                                    <button
+                                        x-show="selectedTerms.length > 200"
+                                        @click="expanded = !expanded"
+                                        class="mt-2 text-xs font-semibold text-amber-700 hover:text-amber-900 focus:outline-none">
+                                        <span x-show="!expanded">⬇ Read more</span>
+                                        <span x-show="expanded">⬆ Show less</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Summary Box -->
+                    <div class="bg-gradient-to-br from-green-50 to-emerald-50 p-5 rounded-2xl border-2 border-green-100">
+                        <div class="flex items-center space-x-3 mb-3">
+                            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <p class="text-sm font-bold text-green-800">Ready to book via WhatsApp</p>
+                        </div>
+                        <p class="text-xs text-green-700">
+                            Click the button below to send your booking details to our WhatsApp. We'll confirm your reservation shortly!
+                        </p>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="pt-4 space-y-3">
+                        <button type="submit"
+                                class="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white py-5 rounded-2xl font-bold shadow-xl transition-all transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center space-x-3">
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+                            </svg>
+                            <span class="text-lg">Send Booking via WhatsApp</span>
+                        </button>
+                        
+                        <button type="button"
+                                @click="isOpen = false" 
+                                class="w-full text-gray-500 hover:text-gray-700 font-semibold py-3 transition">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white py-8 mt-20">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <div class="flex items-center justify-center space-x-3 mb-4">
+                <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-2xl font-display font-bold">VehicleRent</h3>
+            </div>
+            <p class="text-gray-400 text-sm">© 2026 VehicleRent. All rights reserved.</p>
+            <p class="text-gray-500 text-xs mt-2">Motorcycle rental made easy and convenient</p>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script>
+        // Flatpickr Date Picker Configuration
+        const datePickerConfig = {
+            enableTime: true,
+            time_24hr: true,
+            minDate: "today",
+            dateFormat: "Y-m-d H:i",
+            minuteIncrement: 30
+        };
+
+        const startPicker = flatpickr("#main_start", {
+            ...datePickerConfig,
+            onChange: function(selectedDates, dateStr) {
+                endPicker.set("minDate", dateStr);
+            }
+        });
+
+        const endPicker = flatpickr("#main_end", datePickerConfig);
+
+        // Search Function
+        function applySearch() {
+            const startDate = document.getElementById('main_start').value;
+            const endDate = document.getElementById('main_end').value;
+            
+            if (!startDate || !endDate) {
+                alert("Please select both pickup and return dates!");
+                return;
+            }
+            
+            const urlParams = new URLSearchParams(window.location.search);
+            const category = urlParams.get('category') || 'Motor';
+            
+            window.location.href = `/?category=${category}&start=${encodeURIComponent(startDate)}&end=${encodeURIComponent(endDate)}`;
+        }
+
+        // Alpine.js Booking System
+        function bookingSystem() {
+            return {
+                isOpen: false,
+                selectedName: '',
+                selectedId: null,
+                selectedTerms: '',
+                price: 0,
+                startDate: '',
+                endDate: '',
+                
+                // Form data
+                formData: {
+                    customerName: '',
+                    icNumber: '',
+                    nationality: 'Malaysian',
+                    location: '',
+                    destination: ''
+                },
+                
+                openModal(name, price, id, terms = '') {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    this.startDate = urlParams.get('start') || '';
+                    this.endDate = urlParams.get('end') || '';
+                    
+                    if (!this.startDate || !this.endDate) {
+                        alert("Please select dates using the search box above before choosing a vehicle!");
+                        return;
+                    }
+                    
+                    this.selectedName = name;
+                    this.selectedId = id;
+                    this.selectedTerms = terms;
+                    this.price = price;
+                    
+                    // Reset form
+                    this.formData = {
+                        customerName: '',
+                        icNumber: '',
+                        nationality: 'Malaysian',
+                        location: '',
+                        destination: ''
+                    };
+                    
+                    this.isOpen = true;
+                },
+                
+                formatDateRange() {
+                    if (!this.startDate || !this.endDate) return '';
+                    
+                    const formatDate = (dateStr) => {
+                        const date = new Date(dateStr);
+                        const options = { 
+                            month: 'short', 
+                            day: 'numeric', 
+                            hour: '2-digit', 
+                            minute: '2-digit' 
+                        };
+                        return date.toLocaleDateString('en-US', options);
+                    };
+                    
+                    return `${formatDate(this.startDate)} → ${formatDate(this.endDate)}`;
+                },
+                
+                validateForm() {
+                    if (!this.formData.customerName.trim()) {
+                        alert('Please enter your name');
+                        return false;
+                    }
+                    if (!this.formData.icNumber.trim()) {
+                        alert('Please enter your IC number');
+                        return false;
+                    }
+                    if (!this.formData.nationality) {
+                        alert('Please select your nationality');
+                        return false;
+                    }
+                    if (!this.formData.location.trim()) {
+                        alert('Please enter pickup location');
+                        return false;
+                    }
+                    if (!this.formData.destination.trim()) {
+                        alert('Please enter your destination');
+                        return false;
+                    }
+                    return true;
+                },
+                
+                sendWA() {
+                    // Validate form before sending
+                    if (!this.validateForm()) {
+                        return;
+                    }
+                    
+                    const whatsappNumber = "{{ whatsapp }}";
+                    const message = `Hello VehicleRent! I would like to book a motorcycle:\n\n` +
+                                  `👤 *Name:* ${this.formData.customerName}\n` +
+                                  `🆔 *IC Number:* ${this.formData.icNumber}\n` +
+                                  `🌏 *Nationality:* ${this.formData.nationality}\n` +
+                                  `📍 *Pickup Location:* ${this.formData.location}\n` +
+                                  `🎯 *Destination:* ${this.formData.destination}\n\n` +
+                                  `🏍️ *Vehicle:* ${this.selectedName}\n` +
+                                  `📅 *Pickup Date & Time:* ${this.startDate}\n` +
+                                  `🏁 *Return Date & Time:* ${this.endDate}\n` +
+                                  `💰 *Daily Rate:* RM ${this.price}\n\n` +
+                                  `Please confirm the availability and booking. Thank you!`;
+                    
+                    const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
+                    window.open(whatsappUrl, '_blank');
+                    
+                    // Close modal after sending
+                    this.isOpen = false;
+                }
+            }
+        }
+    </script>
+</body>
+</html>
