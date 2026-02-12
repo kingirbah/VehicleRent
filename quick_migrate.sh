@@ -4,7 +4,7 @@
 # This script automates the entire migration process
 
 echo "============================================================"
-echo "  VehiclesRent - PostgreSQL Migration Script"
+echo "  VehiclesRent - PostgreSQL Migration Script" 
 echo "============================================================"
 echo ""
 
