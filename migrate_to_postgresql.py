@@ -1,315 +1,326 @@
 #!/usr/bin/env python3
 """
-Enhanced Migration Script: SQLite to PostgreSQL
-Migrate VehicleRent data from SQLite to PostgreSQL/Supabase
+SQLite to PostgreSQL Migration Script
+Migrates all data from database.db to Supabase PostgreSQL
 """
 
 import sqlite3
 import psycopg2
-from psycopg2.extras import execute_values
+from psycopg2.extras import RealDictCursor
 import os
-import sys
-from urllib.parse import urlparse
+from dotenv import load_dotenv
+from datetime import datetime
 
-def get_postgres_config():
-    """Get PostgreSQL configuration from environment"""
-    database_url = os.environ.get('DATABASE_URL')
-    
-    if database_url:
-        # Parse DATABASE_URL
-        if database_url.startswith('postgres://'):
-            database_url = database_url.replace('postgres://', 'postgresql://', 1)
-        
-        result = urlparse(database_url)
-        return {
-            'host': result.hostname,
-            'database': result.path[1:],
-            'user': result.username,
-            'password': result.password,
-            'port': result.port or 6543
-        }
-    else:
-        # Use individual environment variables
-        return {
-            'host': os.environ.get('SUPABASE_HOST'),
-            'database': os.environ.get('SUPABASE_DB', 'postgres'),
-            'user': os.environ.get('SUPABASE_USER'),
-            'password': os.environ.get('SUPABASE_PASSWORD'),
-            'port': os.environ.get('SUPABASE_PORT', 5432)
-        }
+# Load environment variables
+load_dotenv()
 
-def migrate_data(sqlite_db_path):
-    """
-    Migrate all data from SQLite to PostgreSQL
+# Color codes for terminal output
+GREEN = '\033[92m'
+YELLOW = '\033[93m'
+RED = '\033[91m'
+BLUE = '\033[94m'
+RESET = '\033[0m'
+
+def print_success(message):
+    print(f"{GREEN}✓ {message}{RESET}")
+
+def print_warning(message):
+    print(f"{YELLOW}⚠ {message}{RESET}")
+
+def print_error(message):
+    print(f"{RED}✗ {message}{RESET}")
+
+def print_info(message):
+    print(f"{BLUE}ℹ {message}{RESET}")
+
+def connect_sqlite():
+    """Connect to SQLite database"""
+    if not os.path.exists('database.db'):
+        print_error("database.db not found!")
+        return None
     
-    Args:
-        sqlite_db_path: Path to SQLite database file
-    """
-    
-    print("=" * 70)
-    print("🔄 VehicleRent Database Migration - SQLite → PostgreSQL")
-    print("=" * 70)
-    
-    # Get PostgreSQL configuration
-    print("\n🔧 Getting database configuration...")
-    pg_config = get_postgres_config()
-    
-    if not pg_config['host'] or not pg_config['password']:
-        print("❌ Error: Database configuration incomplete!")
-        print("\nPlease set one of:")
-        print("  1. DATABASE_URL environment variable")
-        print("     export DATABASE_URL='postgresql://user:pass@host:5432/db'")
-        print("\n  2. Individual environment variables:")
-        print("     export SUPABASE_HOST='db.xxx.supabase.co'")
-        print("     export SUPABASE_USER='postgres.xxx'")
-        print("     export SUPABASE_PASSWORD='your_password'")
-        sys.exit(1)
-    
-    print(f"   ✅ Host: {pg_config['host']}")
-    print(f"   ✅ Database: {pg_config['database']}")
-    print(f"   ✅ User: {pg_config['user']}")
-    
-    # Connect to SQLite
-    print("\n📂 Connecting to SQLite database...")
+    conn = sqlite3.connect('database.db')
+    conn.row_factory = sqlite3.Row
+    return conn
+
+def connect_postgres():
+    """Connect to PostgreSQL database"""
     try:
-        sqlite_conn = sqlite3.connect(sqlite_db_path)
-        sqlite_conn.row_factory = sqlite3.Row
-        sqlite_cur = sqlite_conn.cursor()
-        print("   ✅ SQLite connected")
+        conn = psycopg2.connect(
+            host=os.getenv('SUPABASE_HOST'),
+            database=os.getenv('SUPABASE_DB'),
+            user=os.getenv('SUPABASE_USER'),
+            password=os.getenv('SUPABASE_PASSWORD'),
+            port=os.getenv('SUPABASE_PORT', 6543)
+        )
+        return conn
     except Exception as e:
-        print(f"   ❌ Error connecting to SQLite: {e}")
-        sys.exit(1)
+        print_error(f"PostgreSQL connection failed: {e}")
+        return None
+
+def migrate_admin_users(sqlite_conn, pg_conn):
+    """Migrate admin users"""
+    print_info("Migrating admin users...")
     
-    # Connect to PostgreSQL
-    print("\n🐘 Connecting to PostgreSQL database...")
-    try:
-        pg_conn = psycopg2.connect(**pg_config)
-        pg_cur = pg_conn.cursor()
-        print("   ✅ PostgreSQL connected")
-    except Exception as e:
-        print(f"   ❌ Error connecting to PostgreSQL: {e}")
-        print("\nTroubleshooting:")
-        print("  - Check your database credentials")
-        print("  - Verify the database is running")
-        print("  - Check firewall/security settings")
-        sys.exit(1)
+    sqlite_cursor = sqlite_conn.cursor()
+    pg_cursor = pg_conn.cursor()
     
-    try:
-        # Create tables if they don't exist
-        print("\n🔨 Creating tables...")
-        
-        # Admin users table
-        pg_cur.execute('''
-            CREATE TABLE IF NOT EXISTS admin_users (
-                id SERIAL PRIMARY KEY,
-                user_id VARCHAR(255) UNIQUE NOT NULL,
-                password_hash TEXT NOT NULL,
-                full_name VARCHAR(255) NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                last_login TIMESTAMP
-            )
-        ''')
-        print("   ✅ admin_users table ready")
-        
-        # Vehicles table
-        pg_cur.execute('''
-            CREATE TABLE IF NOT EXISTS vehicles (
-                id SERIAL PRIMARY KEY,
-                name VARCHAR(255) UNIQUE NOT NULL,
-                type VARCHAR(100) NOT NULL,
-                cc VARCHAR(50) NOT NULL,
-                license_plate VARCHAR(50) UNIQUE,
-                category VARCHAR(100) DEFAULT 'Motor',
-                price_day INTEGER NOT NULL,
-                price_3day INTEGER NOT NULL,
-                price_weekly INTEGER NOT NULL,
-                price_monthly INTEGER NOT NULL,
-                image_url TEXT,
-                terms_and_conditions TEXT,
-                is_active INTEGER DEFAULT 1,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        ''')
-        print("   ✅ vehicles table ready")
-        
-        # Bookings table
-        pg_cur.execute('''
-            CREATE TABLE IF NOT EXISTS bookings (
-                id SERIAL PRIMARY KEY,
-                booking_number VARCHAR(50) UNIQUE NOT NULL,
-                vehicle_id INTEGER NOT NULL,
-                customer_name VARCHAR(255) NOT NULL,
-                ic_number VARCHAR(100),
-                nationality VARCHAR(100) DEFAULT 'Malaysian',
-                customer_photo TEXT,
-                location VARCHAR(255),
-                destination VARCHAR(255),
-                start_date VARCHAR(50) NOT NULL,
-                pickup_time VARCHAR(50) NOT NULL,
-                end_date VARCHAR(50) NOT NULL,
-                return_time VARCHAR(50) NOT NULL,
-                total_price DECIMAL(10,2),
-                status VARCHAR(50) DEFAULT 'pending',
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (vehicle_id) REFERENCES vehicles (id) ON DELETE CASCADE
-            )
-        ''')
-        print("   ✅ bookings table ready")
-        
-        pg_conn.commit()
-        
-        # Migrate admin_users
-        print("\n👥 Migrating admin_users...")
-        sqlite_cur.execute("SELECT * FROM admin_users")
-        admin_users = sqlite_cur.fetchall()
-        
-        if admin_users:
-            pg_cur.execute("DELETE FROM admin_users")
-            
-            for user in admin_users:
-                pg_cur.execute("""
-                    INSERT INTO admin_users (user_id, password_hash, full_name, created_at, last_login)
-                    VALUES (%s, %s, %s, %s, %s)
-                """, (
-                    user['user_id'],
-                    user['password_hash'],
-                    user['full_name'],
-                    user['created_at'],
-                    user['last_login']
-                ))
-            
-            pg_conn.commit()
-            print(f"   ✅ Migrated {len(admin_users)} admin users")
-        else:
-            print("   ⚠️  No admin users found")
-        
-        # Migrate vehicles
-        print("\n🚗 Migrating vehicles...")
-        sqlite_cur.execute("SELECT * FROM vehicles")
-        vehicles = sqlite_cur.fetchall()
-        
-        if vehicles:
-            pg_cur.execute("DELETE FROM vehicles")
-            
-            for vehicle in vehicles:
-                pg_cur.execute("""
-                    INSERT INTO vehicles (
-                        name, type, cc, license_plate, category,
-                        price_day, price_3day, price_weekly, price_monthly,
-                        image_url, terms_and_conditions, is_active, created_at
-                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                """, (
-                    vehicle['name'],
-                    vehicle['type'],
-                    vehicle['cc'],
-                    vehicle['license_plate'],
-                    vehicle['category'],
-                    vehicle['price_day'],
-                    vehicle['price_3day'],
-                    vehicle['price_weekly'],
-                    vehicle['price_monthly'],
-                    vehicle['image_url'],
-                    vehicle['terms_and_conditions'],
-                    vehicle['is_active'],
-                    vehicle['created_at']
-                ))
-            
-            pg_conn.commit()
-            print(f"   ✅ Migrated {len(vehicles)} vehicles")
-        else:
-            print("   ⚠️  No vehicles found")
-        
-        # Migrate bookings
-        print("\n📅 Migrating bookings...")
-        sqlite_cur.execute("SELECT * FROM bookings")
-        bookings = sqlite_cur.fetchall()
-        
-        if bookings:
-            pg_cur.execute("DELETE FROM bookings")
-            
-            for booking in bookings:
-                pg_cur.execute("""
-                    INSERT INTO bookings (
-                        booking_number, vehicle_id, customer_name, ic_number,
-                        nationality, customer_photo, location, destination,
-                        start_date, pickup_time, end_date, return_time,
-                        total_price, status, created_at
-                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                """, (
-                    booking['booking_number'],
-                    booking['vehicle_id'],
-                    booking['customer_name'],
-                    booking['ic_number'],
-                    booking['nationality'],
-                    booking['customer_photo'],
-                    booking['location'],
-                    booking['destination'],
-                    booking['start_date'],
-                    booking['pickup_time'],
-                    booking['end_date'],
-                    booking['return_time'],
-                    booking['total_price'],
-                    booking['status'],
-                    booking['created_at']
-                ))
-            
-            pg_conn.commit()
-            print(f"   ✅ Migrated {len(bookings)} bookings")
-        else:
-            print("   ⚠️  No bookings found")
-        
-        # Verify migration
-        print("\n🔍 Verifying migration...")
-        
-        pg_cur.execute("SELECT COUNT(*) FROM admin_users")
-        pg_users = pg_cur.fetchone()[0]
-        
-        pg_cur.execute("SELECT COUNT(*) FROM vehicles")
-        pg_vehicles = pg_cur.fetchone()[0]
-        
-        pg_cur.execute("SELECT COUNT(*) FROM bookings")
-        pg_bookings = pg_cur.fetchone()[0]
-        
-        print(f"\n📊 Migration Results:")
-        print(f"   SQLite     → Users: {len(admin_users)}, Vehicles: {len(vehicles)}, Bookings: {len(bookings)}")
-        print(f"   PostgreSQL → Users: {pg_users}, Vehicles: {pg_vehicles}, Bookings: {pg_bookings}")
-        
-        if pg_users == len(admin_users) and pg_vehicles == len(vehicles) and pg_bookings == len(bookings):
-            print("\n   ✅ Migration verified successfully!")
-        else:
-            print("\n   ⚠️  Warning: Count mismatch detected")
-        
-    except Exception as e:
-        print(f"\n❌ Migration error: {e}")
-        pg_conn.rollback()
-        raise
+    # Get SQLite data
+    sqlite_cursor.execute("SELECT * FROM admin_users")
+    users = sqlite_cursor.fetchall()
     
-    finally:
-        sqlite_cur.close()
+    migrated = 0
+    skipped = 0
+    
+    for user in users:
+        try:
+            pg_cursor.execute("""
+                INSERT INTO admin_users 
+                (user_id, password_hash, full_name, created_at, last_login)
+                VALUES (%s, %s, %s, %s, %s)
+                ON CONFLICT (user_id) DO NOTHING
+            """, (
+                user['user_id'],
+                user['password_hash'],
+                user['full_name'],
+                user['created_at'],
+                user['last_login']
+            ))
+            
+            if pg_cursor.rowcount > 0:
+                migrated += 1
+            else:
+                skipped += 1
+                
+        except Exception as e:
+            print_warning(f"Failed to migrate user {user['user_id']}: {e}")
+            skipped += 1
+    
+    pg_conn.commit()
+    print_success(f"Admin users: {migrated} migrated, {skipped} skipped")
+    return migrated
+
+def migrate_vehicles(sqlite_conn, pg_conn):
+    """Migrate vehicles"""
+    print_info("Migrating vehicles...")
+    
+    sqlite_cursor = sqlite_conn.cursor()
+    pg_cursor = pg_conn.cursor()
+    
+    # Get SQLite data
+    sqlite_cursor.execute("SELECT * FROM vehicles")
+    vehicles = sqlite_cursor.fetchall()
+    
+    migrated = 0
+    skipped = 0
+    
+    for vehicle in vehicles:
+        try:
+            pg_cursor.execute("""
+                INSERT INTO vehicles 
+                (name, type, cc, license_plate, category, 
+                 price_day, price_3day, price_weekly, price_monthly,
+                 image_url, terms_and_conditions, is_active, created_at)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (name) DO UPDATE SET
+                    type = EXCLUDED.type,
+                    cc = EXCLUDED.cc,
+                    license_plate = EXCLUDED.license_plate,
+                    category = EXCLUDED.category,
+                    price_day = EXCLUDED.price_day,
+                    price_3day = EXCLUDED.price_3day,
+                    price_weekly = EXCLUDED.price_weekly,
+                    price_monthly = EXCLUDED.price_monthly,
+                    image_url = EXCLUDED.image_url,
+                    terms_and_conditions = EXCLUDED.terms_and_conditions,
+                    is_active = EXCLUDED.is_active
+                RETURNING id
+            """, (
+                vehicle['name'],
+                vehicle['type'],
+                vehicle['cc'],
+                vehicle['license_plate'],
+                vehicle.get('category', 'Motor'),
+                vehicle['price_day'],
+                vehicle['price_3day'],
+                vehicle['price_weekly'],
+                vehicle['price_monthly'],
+                vehicle['image_url'],
+                vehicle.get('terms_and_conditions'),
+                vehicle['is_active'],
+                vehicle['created_at']
+            ))
+            
+            migrated += 1
+                
+        except Exception as e:
+            print_warning(f"Failed to migrate vehicle {vehicle['name']}: {e}")
+            skipped += 1
+    
+    pg_conn.commit()
+    print_success(f"Vehicles: {migrated} migrated, {skipped} skipped")
+    return migrated
+
+def migrate_bookings(sqlite_conn, pg_conn):
+    """Migrate bookings"""
+    print_info("Migrating bookings...")
+    
+    sqlite_cursor = sqlite_conn.cursor()
+    pg_cursor = pg_conn.cursor()
+    
+    # Get SQLite data
+    sqlite_cursor.execute("SELECT * FROM bookings")
+    bookings = sqlite_cursor.fetchall()
+    
+    migrated = 0
+    skipped = 0
+    
+    for booking in bookings:
+        try:
+            # Get PostgreSQL vehicle_id from name
+            sqlite_cursor.execute("SELECT name FROM vehicles WHERE id = ?", (booking['vehicle_id'],))
+            vehicle = sqlite_cursor.fetchone()
+            
+            if not vehicle:
+                print_warning(f"Vehicle not found for booking {booking.get('booking_number', booking['id'])}")
+                skipped += 1
+                continue
+            
+            pg_cursor.execute("SELECT id FROM vehicles WHERE name = %s", (vehicle['name'],))
+            pg_vehicle = pg_cursor.fetchone()
+            
+            if not pg_vehicle:
+                print_warning(f"Vehicle {vehicle['name']} not found in PostgreSQL")
+                skipped += 1
+                continue
+            
+            pg_vehicle_id = pg_vehicle[0]
+            
+            pg_cursor.execute("""
+                INSERT INTO bookings 
+                (booking_number, vehicle_id, customer_name, ic_number, 
+                 nationality, customer_photo, location, destination,
+                 start_date, pickup_time, end_date, return_time,
+                 total_price, status, created_at)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (booking_number) DO NOTHING
+            """, (
+                booking.get('booking_number', f"VR-MIGRATED-{booking['id']}"),
+                pg_vehicle_id,
+                booking['customer_name'],
+                booking.get('ic_number'),
+                booking.get('nationality', 'Malaysian'),
+                booking.get('customer_photo'),
+                booking.get('location'),
+                booking.get('destination'),
+                booking['start_date'],
+                booking['pickup_time'],
+                booking['end_date'],
+                booking['return_time'],
+                booking.get('total_price'),
+                booking['status'],
+                booking.get('created_at')
+            ))
+            
+            if pg_cursor.rowcount > 0:
+                migrated += 1
+            else:
+                skipped += 1
+                
+        except Exception as e:
+            print_warning(f"Failed to migrate booking {booking.get('id')}: {e}")
+            skipped += 1
+    
+    pg_conn.commit()
+    print_success(f"Bookings: {migrated} migrated, {skipped} skipped")
+    return migrated
+
+def verify_migration(pg_conn):
+    """Verify migration results"""
+    print_info("Verifying migration...")
+    
+    cursor = pg_conn.cursor(cursor_factory=RealDictCursor)
+    
+    # Count records
+    cursor.execute("SELECT COUNT(*) as count FROM admin_users")
+    admin_count = cursor.fetchone()['count']
+    
+    cursor.execute("SELECT COUNT(*) as count FROM vehicles")
+    vehicle_count = cursor.fetchone()['count']
+    
+    cursor.execute("SELECT COUNT(*) as count FROM bookings")
+    booking_count = cursor.fetchone()['count']
+    
+    print()
+    print("=" * 60)
+    print(f"  MIGRATION VERIFICATION")
+    print("=" * 60)
+    print(f"  Admin Users: {admin_count}")
+    print(f"  Vehicles:    {vehicle_count}")
+    print(f"  Bookings:    {booking_count}")
+    print("=" * 60)
+    print()
+
+def main():
+    """Main migration function"""
+    print()
+    print("=" * 60)
+    print("  VehiclesRent - SQLite to PostgreSQL Migration")
+    print("=" * 60)
+    print()
+    
+    # Check .env file
+    if not os.path.exists('.env'):
+        print_error(".env file not found!")
+        print_info("Please create .env file with Supabase credentials")
+        return
+    
+    # Connect to databases
+    print_info("Connecting to databases...")
+    
+    sqlite_conn = connect_sqlite()
+    if not sqlite_conn:
+        return
+    print_success("Connected to SQLite")
+    
+    pg_conn = connect_postgres()
+    if not pg_conn:
         sqlite_conn.close()
-        pg_cur.close()
+        return
+    print_success("Connected to PostgreSQL")
+    print()
+    
+    try:
+        # Run migrations
+        total_migrated = 0
+        
+        total_migrated += migrate_admin_users(sqlite_conn, pg_conn)
+        total_migrated += migrate_vehicles(sqlite_conn, pg_conn)
+        total_migrated += migrate_bookings(sqlite_conn, pg_conn)
+        
+        print()
+        
+        # Verify
+        verify_migration(pg_conn)
+        
+        # Summary
+        print_success(f"Migration completed! Total records migrated: {total_migrated}")
+        print()
+        print_info("Next steps:")
+        print("  1. Test login: admin / admin123")
+        print("  2. Verify all data in Supabase dashboard")
+        print("  3. Update app to use app_postgresql.py")
+        print("  4. Deploy to production")
+        print()
+        
+    except Exception as e:
+        print_error(f"Migration failed: {e}")
+        pg_conn.rollback()
+        
+    finally:
+        sqlite_conn.close()
         pg_conn.close()
-    
-    print("\n" + "=" * 70)
-    print("✅ Migration completed successfully!")
-    print("=" * 70)
-    print("\n📋 Next steps:")
-    print("   1. ✅ Data migrated to PostgreSQL")
-    print("   2. Set environment variables in Koyeb dashboard")
-    print("   3. Redeploy your application")
-    print("   4. Test login and all features")
-    print("\n🎉 You're ready to go!\n")
+        print_info("Database connections closed")
 
-
-if __name__ == "__main__":
-    # Configuration
-    SQLITE_DB = "database.db"
-    
-    # Check if SQLite database exists
-    if not os.path.exists(SQLITE_DB):
-        print(f"❌ Error: SQLite database not found: {SQLITE_DB}")
-        print("\nPlease ensure database.db is in the current directory.")
-        sys.exit(1)
-    
-    # Run migration
-    migrate_data(SQLITE_DB)
+if __name__ == '__main__':
+    main()
