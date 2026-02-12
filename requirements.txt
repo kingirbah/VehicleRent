@@ -1,6 +1,21 @@
+# Web Framework
 Flask>=3.0.0
 Werkzeug>=3.0.1
-Pillow>=10.3.0
-psycopg2-binary
-gunicorn
+
+# Database (PostgreSQL & SQLAlchemy)
 Flask-SQLAlchemy
+psycopg2-binary
+sqlalchemy>=2.0.0
+
+# Environment & Server
+python-dotenv
+gunicorn
+
+# Image Processing (Penting untuk upload foto kendaraan)
+Pillow>=10.3.0
+
+# Utils
+blinker>=1.9.0
+itsdangerous>=2.2.0
+jinja2>=3.1.2
+click>=8.1.3
