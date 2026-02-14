@@ -130,12 +130,15 @@
                                 <div class="text-sm font-medium text-gray-900">{{ user.full_name }}</div>
                             </td>
                             <td class="px-6 py-3 align-middle">
-                                <div class="text-xs text-gray-500 font-mono">{{ user.created_at[:10] }}</div>
+                                <div class="text-xs text-gray-500 font-mono">
+                                    {{ user.created_at.strftime('%Y-%m-%d') if user.created_at else 'N/A' }}
+                                </div>
                             </td>
                             <td class="px-6 py-3 align-middle">
                                 <div class="text-xs text-gray-500">
                                     {% if user.last_login %}
-                                    <span class="text-green-700 font-medium">{{ user.last_login[:10] }}</span> <span class="text-gray-400">{{ user.last_login[11:16] }}</span>
+                                    <span class="text-green-700 font-medium">{{ user.last_login.strftime('%Y-%m-%d') }}</span> 
+                                    <span class="text-gray-400">{{ user.last_login.strftime('%H:%M') }}</span>
                                     {% else %}
                                     <span class="text-gray-300 italic">Never</span>
                                     {% endif %}
@@ -177,7 +180,11 @@
                         <div>
                             <p class="text-[10px] text-gray-400 uppercase">Last Login</p>
                             <p class="text-xs font-medium text-gray-700">
-                                {% if user.last_login %}{{ user.last_login[:16] }}{% else %}Never{% endif %}
+                                {% if user.last_login %}
+                                    {{ user.last_login.strftime('%Y-%m-%d %H:%M') }}
+                                {% else %}
+                                    Never
+                                {% endif %}
                             </p>
                         </div>
                         {% if user.user_id == session.user_id %}
