@@ -10,6 +10,7 @@ import io
 from PIL import Image
 from dotenv import load_dotenv
 from contextlib import contextmanager
+from urllib.parse import urlparse
 
 # Load environment variables
 load_dotenv()
@@ -20,14 +21,58 @@ app.secret_key = os.getenv('SECRET_KEY', 'vehiclesrent_v7_ultra_secure_key_2026_
 # --- CONFIGURATION ---
 WHATSAPP_NUMBER = os.getenv('WHATSAPP_NUMBER', '6285111040408')
 
-# Database configuration
-DB_CONFIG = {
-    'host': os.getenv('SUPABASE_HOST'),
-    'database': os.getenv('SUPABASE_DB', 'postgres'),
-    'user': os.getenv('SUPABASE_USER', 'postgres'),
-    'password': os.getenv('SUPABASE_PASSWORD'),
-    'port': os.getenv('SUPABASE_PORT', 5432)
-}
+# Database configuration - FIXED to prevent local socket connection
+DATABASE_URL = os.getenv('DATABASE_URL')
+
+if DATABASE_URL:
+    # Fix postgres:// to postgresql://
+    if DATABASE_URL.startswith('postgres://'):
+        DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql://', 1)
+    
+    # Parse DATABASE_URL
+    result = urlparse(DATABASE_URL)
+    DB_CONFIG = {
+        'host': result.hostname,
+        'database': result.path[1:] if result.path else 'postgres',  # Remove leading /
+        'user': result.username,
+        'password': result.password,
+        'port': result.port or 6543
+    }
+    print(f"📊 Using DATABASE_URL: {result.hostname}")
+else:
+    # Fallback to individual environment variables
+    DB_CONFIG = {
+        'host': os.getenv('SUPABASE_HOST'),
+        'database': os.getenv('SUPABASE_DB', 'postgres'),
+        'user': os.getenv('SUPABASE_USER', 'postgres'),
+        'password': os.getenv('SUPABASE_PASSWORD'),
+        'port': int(os.getenv('SUPABASE_PORT', '6543'))
+    }
+    print(f"📊 Using individual env vars: {DB_CONFIG.get('host', 'NOT SET')}")
+
+# CRITICAL FIX: Remove None values to prevent psycopg2 local socket fallback
+DB_CONFIG = {k: v for k, v in DB_CONFIG.items() if v is not None}
+
+# Validate database configuration
+if not DB_CONFIG.get('host') or not DB_CONFIG.get('password'):
+    print("\n" + "="*70)
+    print("⚠️  WARNING: Database configuration incomplete!")
+    print("="*70)
+    print("\nMissing required environment variables:")
+    if not DB_CONFIG.get('host'):
+        print("  ❌ Database host not set")
+    if not DB_CONFIG.get('password'):
+        print("  ❌ Database password not set")
+    print("\nPlease set ONE of these in Koyeb Environment Variables:")
+    print("  1. DATABASE_URL (recommended)")
+    print("     DATABASE_URL=postgresql://user:pass@host:5432/db")
+    print("\n  2. Individual variables:")
+    print("     SUPABASE_HOST=db.xxx.supabase.co")
+    print("     SUPABASE_USER=postgres.xxx")
+    print("     SUPABASE_PASSWORD=your_password")
+    print("     SUPABASE_DB=postgres")
+    print("     SUPABASE_PORT=6543")
+    print("="*70 + "\n")
 
 # Upload configuration
 UPLOAD_FOLDER = 'static/uploads/vehicles'
@@ -46,15 +91,36 @@ os.makedirs(CUSTOMER_PHOTO_FOLDER, exist_ok=True)
 @contextmanager
 def get_db_connection():
     """Context manager for database connections"""
-    conn = psycopg2.connect(**DB_CONFIG)
+    conn = None
     try:
-        yield conn
-        conn.commit()
-    except Exception as e:
-        conn.rollback()
-        raise e
+        # Ensure we have required config before attempting connection
+        if not DB_CONFIG.get('host'):
+            raise ValueError("Database host not configured. Please set DATABASE_URL or SUPABASE_HOST")
+        
+        conn = psycopg2.connect(**DB_CONFIG)
+        try:
+            yield conn
+            conn.commit()
+        except Exception as e:
+            conn.rollback()
+            print(f"❌ Database error: {e}")
+            raise e
+    except psycopg2.OperationalError as e:
+        print(f"\n❌ Database connection failed!")
+        print(f"Error: {e}")
+        print(f"\nCurrent config:")
+        print(f"  Host: {DB_CONFIG.get('host', 'NOT SET')}")
+        print(f"  Database: {DB_CONFIG.get('database', 'NOT SET')}")
+        print(f"  User: {DB_CONFIG.get('user', 'NOT SET')}")
+        print(f"  Port: {DB_CONFIG.get('port', 'NOT SET')}")
+        print(f"\nPlease verify your environment variables in Koyeb!")
+        raise
+    except ValueError as e:
+        print(f"\n❌ Configuration error: {e}")
+        raise
     finally:
-        conn.close()
+        if conn:
+            conn.close()
 
 
 def get_db_cursor(conn):
@@ -112,7 +178,7 @@ def init_db():
     with get_db_connection() as conn:
         cursor = get_db_cursor(conn)
         
-        print("\nChecking database schema...")
+        print("\n🔧 Checking database schema...")
         
         # Check vehicles table columns
         cursor.execute("""
@@ -125,16 +191,16 @@ def init_db():
         # Add missing columns to vehicles if needed
         if 'license_plate' not in vehicle_columns:
             cursor.execute("ALTER TABLE vehicles ADD COLUMN license_plate VARCHAR(50) UNIQUE")
-            print("  ✓ Added column: license_plate")
+            print("  ✅ Added column: license_plate")
         
         if 'category' not in vehicle_columns:
             cursor.execute("ALTER TABLE vehicles ADD COLUMN category VARCHAR(50) DEFAULT 'Motor'")
             cursor.execute("UPDATE vehicles SET category = 'Motor' WHERE category IS NULL")
-            print("  ✓ Added column: category")
+            print("  ✅ Added column: category")
         
         if 'terms_and_conditions' not in vehicle_columns:
             cursor.execute("ALTER TABLE vehicles ADD COLUMN terms_and_conditions TEXT")
-            print("  ✓ Added column: terms_and_conditions")
+            print("  ✅ Added column: terms_and_conditions")
         
         # Check bookings table columns
         cursor.execute("""
@@ -146,7 +212,7 @@ def init_db():
         
         if 'booking_number' not in booking_columns:
             cursor.execute("ALTER TABLE bookings ADD COLUMN booking_number VARCHAR(50) UNIQUE")
-            print("  ✓ Added column: booking_number")
+            print("  ✅ Added column: booking_number")
             
             # Generate booking numbers for existing records
             cursor.execute("SELECT id, created_at FROM bookings WHERE booking_number IS NULL OR booking_number = ''")
@@ -168,19 +234,19 @@ def init_db():
                     
                     cursor.execute("UPDATE bookings SET booking_number = %s WHERE id = %s", 
                                  (booking_number, booking_id))
-                print(f"  ✓ Generated {len(existing_bookings)} booking numbers")
+                print(f"  ✅ Generated {len(existing_bookings)} booking numbers")
         
         if 'nationality' not in booking_columns:
             cursor.execute("ALTER TABLE bookings ADD COLUMN nationality VARCHAR(100) DEFAULT 'Malaysian'")
-            print("  ✓ Added column: nationality")
+            print("  ✅ Added column: nationality")
         
         if 'customer_photo' not in booking_columns:
             cursor.execute("ALTER TABLE bookings ADD COLUMN customer_photo TEXT")
-            print("  ✓ Added column: customer_photo")
+            print("  ✅ Added column: customer_photo")
         
         if 'total_price' not in booking_columns:
             cursor.execute("ALTER TABLE bookings ADD COLUMN total_price DECIMAL(10,2)")
-            print("  ✓ Added column: total_price")
+            print("  ✅ Added column: total_price")
         
         # Check if default admin exists
         cursor.execute("SELECT COUNT(*) as count FROM admin_users")
@@ -192,10 +258,10 @@ def init_db():
                 "INSERT INTO admin_users (user_id, password_hash, full_name) VALUES (%s, %s, %s)",
                 ('admin', default_hash, 'Administrator')
             )
-            print("  ✓ Default admin created - user_id: admin, password: admin123")
+            print("  ✅ Default admin created - user_id: admin, password: admin123")
         
         conn.commit()
-        print("Database schema check completed!\n")
+        print("✅ Database schema check completed!\n")
 
 
 # --- AUTHENTICATION ---
@@ -212,7 +278,7 @@ def login_required(f):
 # --- UTILITY FUNCTIONS ---
 def generate_booking_number():
     """Generate unique booking number with format: VR-YYYYMMDD-XXXX"""
-    now = datetime(2026, 2, 10)
+    now = datetime.now()
     date_str = now.strftime('%Y%m%d')
     prefix = f'VR-{date_str}-'
     
@@ -450,7 +516,6 @@ def admin_delete_user(id):
     with get_db_connection() as conn:
         cursor = get_db_cursor(conn)
         
-        # Prevent deleting yourself
         cursor.execute('SELECT user_id FROM admin_users WHERE id = %s', (id,))
         user = cursor.fetchone()
         
@@ -458,7 +523,6 @@ def admin_delete_user(id):
             flash('Cannot delete your own account!', 'error')
             return redirect(url_for('admin_users'))
         
-        # Ensure at least one admin remains
         cursor.execute('SELECT COUNT(*) as cnt FROM admin_users')
         count = cursor.fetchone()['cnt']
         
@@ -675,8 +739,8 @@ def admin_detail(id):
                      (id,))
         bookings = cursor.fetchall()
     
-    current_year = 2026
-    current_month = 2
+    current_year = datetime.now().year
+    current_month = datetime.now().month
     
     calendar_data = get_calendar_data(id, current_year, current_month)
     
@@ -700,23 +764,56 @@ def get_vehicle_calendar(id, year, month):
 @app.route('/admin/on-rent')
 @login_required
 def admin_on_rent():
-    """View currently rented vehicles"""
-    today = datetime(2026, 2, 10).strftime('%Y-%m-%d %H:%M')
+    """View currently rented vehicles - SIMPLIFIED VERSION"""
     
+    # Get ALL confirmed/pending bookings first
     query = '''
-        SELECT b.*, v.name as vehicle_name, v.license_plate, v.type as vehicle_type, v.category
+        SELECT 
+            b.*, 
+            v.name as vehicle_name, 
+            v.license_plate, 
+            v.type as vehicle_type, 
+            v.category
         FROM bookings b
         JOIN vehicles v ON b.vehicle_id = v.id
         WHERE b.status IN ('confirmed', 'pending')
-        AND (b.start_date || ' ' || b.pickup_time)::timestamp <= %s::timestamp
-        AND (b.end_date || ' ' || b.return_time)::timestamp >= %s::timestamp
         ORDER BY b.end_date ASC, b.return_time ASC
     '''
     
     with get_db_connection() as conn:
         cursor = get_db_cursor(conn)
-        cursor.execute(query, (today, today))
-        on_rent = cursor.fetchall()
+        cursor.execute(query)
+        all_bookings = cursor.fetchall()
+    
+    # Filter di Python instead of SQL (lebih reliable)
+    from datetime import datetime
+    now = datetime.now()
+    
+    on_rent = []
+    for booking in all_bookings:
+        try:
+            # Parse start datetime
+            start_dt = datetime.strptime(
+                f"{booking['start_date']} {booking['pickup_time']}", 
+                '%Y-%m-%d %H:%M'
+            )
+            
+            # Parse end datetime
+            end_dt = datetime.strptime(
+                f"{booking['end_date']} {booking['return_time']}", 
+                '%Y-%m-%d %H:%M'
+            )
+            
+            # Check if currently on rent
+            if start_dt <= now <= end_dt:
+                on_rent.append(booking)
+                print(f"✅ ON RENT: {booking['booking_number']} - {booking['vehicle_name']}")
+        except Exception as e:
+            print(f"❌ Error parsing booking {booking.get('id')}: {e}")
+            continue
+    
+    print(f"\n📊 Total confirmed/pending: {len(all_bookings)}")
+    print(f"🔄 Currently on rent: {len(on_rent)}")
     
     return render_template('admin_on_rent.html', bookings=on_rent)
 
@@ -738,7 +835,6 @@ def admin_add_booking(vehicle_id):
             
             booking_number = generate_booking_number()
             
-            # Handle customer photo upload
             customer_photo_path = None
             if 'customer_photo' in request.files:
                 file = request.files['customer_photo']
@@ -749,7 +845,6 @@ def admin_add_booking(vehicle_id):
                     if saved_path:
                         customer_photo_path = f"/static/uploads/customers/{filename}"
             
-            # Get total price
             total_price = request.form.get('total_price', '')
             try:
                 total_price = float(total_price) if total_price else None
@@ -796,7 +891,6 @@ def admin_edit_booking(id):
                 flash('Booking not found!', 'error')
                 return redirect(url_for('admin_catalog'))
             
-            # Handle customer photo upload
             customer_photo_path = booking['customer_photo']
             if 'customer_photo' in request.files:
                 file = request.files['customer_photo']
@@ -816,7 +910,6 @@ def admin_edit_booking(id):
                         
                         customer_photo_path = f"/static/uploads/customers/{filename}"
             
-            # Get total price
             total_price = request.form.get('total_price', '')
             try:
                 total_price = float(total_price) if total_price else None
@@ -858,7 +951,6 @@ def admin_delete_booking(id):
         booking = cursor.fetchone()
         
         if booking:
-            # Delete customer photo if exists
             if booking['customer_photo'] and booking['customer_photo'].startswith('/static/'):
                 photo_path = booking['customer_photo'].lstrip('/')
                 if os.path.exists(photo_path):
@@ -906,7 +998,8 @@ def admin_all_bookings():
     sort_by = request.args.get('sort', 'newest')
     page = int(request.args.get('page', 1))
     
-    month_filter = request.args.get('month', '2026-02')
+    current_month = datetime.now().strftime('%Y-%m')
+    month_filter = request.args.get('month', current_month)
     show_all = request.args.get('show_all', '0') == '1'
     
     query = '''
@@ -917,17 +1010,14 @@ def admin_all_bookings():
     '''
     params = []
     
-    # Month filter
     if not show_all and month_filter:
         query += ' AND SUBSTRING(b.start_date FROM 1 FOR 7) = %s'
         params.append(month_filter)
     
-    # Status filter
     if status_filter != 'all':
         query += ' AND b.status = %s'
         params.append(status_filter)
     
-    # Vehicle filter
     if vehicle_filter and vehicle_filter != 'all':
         try:
             query += ' AND b.vehicle_id = %s'
@@ -935,7 +1025,6 @@ def admin_all_bookings():
         except (ValueError, TypeError):
             pass
     
-    # Search
     if search_query:
         query += ''' AND (
             b.booking_number ILIKE %s OR 
@@ -947,7 +1036,6 @@ def admin_all_bookings():
         search_param = f'%{search_query}%'
         params.extend([search_param] * 5)
     
-    # Count total
     with get_db_connection() as conn:
         cursor = get_db_cursor(conn)
         
@@ -956,7 +1044,6 @@ def admin_all_bookings():
         total_bookings = cursor.fetchone()['total']
         total_pages = (total_bookings + ITEMS_PER_PAGE - 1) // ITEMS_PER_PAGE
         
-        # Sorting
         if sort_by == 'newest':
             query += ' ORDER BY b.created_at DESC'
         elif sort_by == 'oldest':
@@ -966,18 +1053,15 @@ def admin_all_bookings():
         elif sort_by == 'customer':
             query += ' ORDER BY b.customer_name ASC'
         
-        # Pagination
         offset = (page - 1) * ITEMS_PER_PAGE
         query += f' LIMIT {ITEMS_PER_PAGE} OFFSET {offset}'
         
         cursor.execute(query, params)
         bookings = cursor.fetchall()
         
-        # Get vehicles for filter
         cursor.execute('SELECT id, name, license_plate FROM vehicles ORDER BY name')
         vehicles = cursor.fetchall()
     
-    # Stats
     stats = {
         'total': total_bookings,
         'confirmed': len([b for b in bookings if b['status'] == 'confirmed']),
@@ -1007,7 +1091,9 @@ def print_bookings_report():
     """Print report"""
     status_filter = request.args.get('status', 'all')
     vehicle_filter = request.args.get('vehicle', 'all')
-    month_filter = request.args.get('month', '2026-02')
+    
+    current_month = datetime.now().strftime('%Y-%m')
+    month_filter = request.args.get('month', current_month)
     
     query = '''
         SELECT b.*, v.name as vehicle_name, v.license_plate, v.type as vehicle_type
@@ -1063,16 +1149,24 @@ def server_error(e):
 
 # --- STARTUP ---
 if __name__ == '__main__':
-    print("\nChecking database connection...")
+    print("\n" + "="*70)
+    print("🚀 VehicleRent Application Starting...")
+    print("="*70)
+    
+    print("\n📊 Checking database connection...")
     try:
         init_db()
-        print("✓ Connected to PostgreSQL/Supabase successfully!")
+        print("✅ Connected to PostgreSQL/Supabase successfully!")
     except Exception as e:
-        print(f"✗ Database connection failed: {e}")
-        print("\nPlease check your .env file and database credentials.")
+        print(f"❌ Database connection failed: {e}")
+        print("\n⚠️  Please check your environment variables!")
+        print("Set either DATABASE_URL or individual SUPABASE_* variables")
         exit(1)
     
-    print("\nApplication Ready!")
-    print("=" * 60)
+    print("\n✅ Application Ready!")
+    print("="*70 + "\n")
     
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    port = int(os.getenv('PORT', 5000))
+    debug = os.getenv('FLASK_ENV') != 'production'
+    
+    app.run(debug=debug, host='0.0.0.0', port=port)
