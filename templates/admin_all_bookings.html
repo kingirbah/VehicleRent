@@ -815,7 +815,7 @@
                                     </select>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-xs text-gray-600 font-medium">
-                                    {{ booking.created_at[:16] }}
+                                    {{ booking.created_at.strftime('%Y-%m-%d %H:%M') if booking.created_at else 'N/A' }}
                                 </td>
                             </tr>
                             {% endfor %}
@@ -848,7 +848,7 @@
                                     class="text-xs font-bold text-blue-600 hover:underline truncate block">
                                 {{ booking.booking_number }}
                             </button>
-                            <p class="text-[0.5625rem] text-gray-500 mt-0.5">{{ booking.created_at[5:16] }}</p>
+                            <p class="text-[0.5625rem] text-gray-500 mt-0.5">{{ booking.created_at.strftime('%m-%d %H:%M') if booking.created_at else 'N/A' }}</p>
                         </div>
                         <select data-booking-id="{{ booking.id }}" 
                                 data-original-status="{{ booking.status }}"
