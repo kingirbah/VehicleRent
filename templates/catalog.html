@@ -510,15 +510,24 @@
         </div>
     </div>
 
+    <!-- 
+        VEHICLE TnC DATA — stored as JSON in <script> to avoid HTML attribute
+        encoding issues (double quotes in TnC break data-* attributes).
+        Keyed by vehicle id.
+    -->
+    <script id="vehicle-tnc-data" type="application/json">
+    {
+        {% for vehicle in vehicles %}
+        "{{ vehicle.id }}": {{ vehicle.terms_and_conditions | default('', true) | tojson }}{% if not loop.last %},{% endif %}
+        {% endfor %}
+    }
+    </script>
+
     <!-- Vehicles Grid -->
     <div class="max-w-7xl mx-auto px-4 py-8">
         {% if vehicles %}
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8">
             {% for vehicle in vehicles %}
-            {# 
-               FIX: Store TnC and other data in data-* attributes as JSON.
-               This avoids backtick/quote/newline issues when passing to JS functions via onclick.
-            #}
             <div class="bike-card bg-white rounded-2xl sm:rounded-3xl overflow-hidden animate-slide-up"
                  data-vehicle-id="{{ vehicle.id }}"
                  data-vehicle-name="{{ vehicle.name | e }}"
@@ -527,7 +536,7 @@
                  data-price-weekly="{{ vehicle.price_weekly }}"
                  data-price-monthly="{{ vehicle.price_monthly }}"
                  data-available="{{ 'true' if vehicle.available != False else 'false' }}"
-                 data-tnc="{{ vehicle.terms_and_conditions | default('', true) | e }}">
+                 data-has-tnc="{{ 'true' if vehicle.terms_and_conditions and vehicle.terms_and_conditions.strip() else 'false' }}">
 
                 <!-- Vehicle Image -->
                 <div class="bike-image h-56 sm:h-56 relative overflow-hidden">
@@ -575,7 +584,7 @@
                         </div>
                         <h3 class="text-base sm:text-xl font-display font-bold text-gray-900 leading-tight">{{ vehicle.name }}</h3>
 
-                        <!-- TnC "See Details" link - shown only if TnC exists -->
+                        <!-- TnC "See Details" link -->
                         {% if vehicle.terms_and_conditions and vehicle.terms_and_conditions.strip() %}
                         <div class="tnc-row mt-1.5">
                             <button type="button"
@@ -584,7 +593,7 @@
                                 <svg class="w-3 h-3 text-current flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                                 </svg>
-                                See T&amp;C Details
+                                &#x1F4CB; See T&amp;C Details
                             </button>
                         </div>
                         {% endif %}
@@ -968,27 +977,29 @@
         }
 
         // =====================================================================
-        // FIX: Read vehicle data from data-* attributes (avoids JS injection bug)
+        // Vehicle TnC — loaded from embedded JSON (100% safe, no HTML encoding issues)
         // =====================================================================
+        let vehicleTncData = {};
+        try {
+            const tncEl = document.getElementById('vehicle-tnc-data');
+            if (tncEl) vehicleTncData = JSON.parse(tncEl.textContent);
+        } catch(e) { console.warn('TnC parse error', e); }
 
-        /**
-         * Called by "Select" button on each card.
-         * Reads all data from data-* attributes - no string escaping issues.
-         */
-        function openModalFromCard(card) {
-            if (!card) return;
-            const alpineData = Alpine.$data(document.querySelector('[x-data]'));
-            alpineData.openModalFromCard(card);
+        function getAlpineData() {
+            const el = document.querySelector('[x-data]');
+            return el ? Alpine.$data(el) : null;
         }
 
-        /**
-         * Called by "Book This Vehicle →" inside TnC popup.
-         * Finds the card by vehicle id and opens the booking modal.
-         */
+        function openModalFromCard(card) {
+            if (!card) return;
+            const a = getAlpineData();
+            if (a) a.openModalFromCard(card);
+        }
+
         function openTncPopup(card) {
             if (!card) return;
-            const alpineData = Alpine.$data(document.querySelector('[x-data]'));
-            alpineData.openTncFromCard(card);
+            const a = getAlpineData();
+            if (a) a.openTncFromCard(card);
         }
 
         // Alpine.js Booking System
@@ -1028,7 +1039,7 @@
                     this.showAlert = true;
                 },
 
-                // ── Read from data-* attributes (THE FIX) ──────────────────
+                // ── Read from data-* attributes + JSON TnC store (THE FIX) ──
                 openModalFromCard(card) {
                     const urlParams = new URLSearchParams(window.location.search);
                     this.startDate = urlParams.get('start') || '';
@@ -1039,13 +1050,18 @@
                         return;
                     }
 
+                    const vehicleId = card.dataset.vehicleId || '';
                     this.selectedName    = card.dataset.vehicleName   || '';
-                    this.selectedId      = card.dataset.vehicleId     || null;
-                    this.selectedTerms   = card.dataset.tnc            || '';
+                    this.selectedId      = vehicleId;
                     this.priceDay        = card.dataset.priceDay       || 0;
                     this.price3Day       = card.dataset.price3day      || 0;
                     this.priceWeekly     = card.dataset.priceWeekly    || 0;
                     this.priceMonthly    = card.dataset.priceMonthly   || 0;
+
+                    // Read TnC from JSON store
+                    this.selectedTerms = (typeof vehicleTncData !== 'undefined' && vehicleTncData[vehicleId])
+                                         ? vehicleTncData[vehicleId]
+                                         : '';
 
                     this.formData = {
                         customerName: '',
@@ -1067,14 +1083,21 @@
 
                 // Open TnC popup from card
                 openTncFromCard(card) {
-                    const tnc = card.dataset.tnc || '';
-                    if (!tnc.trim()) return;
+                    const vehicleId = card.dataset.vehicleId || '';
+                    // Read TnC from JSON store (avoids HTML attribute encoding issues)
+                    const tnc = (typeof vehicleTncData !== 'undefined' && vehicleTncData[vehicleId]) 
+                                ? vehicleTncData[vehicleId] 
+                                : (card.dataset.tnc || '');
+                    if (!tnc || !tnc.trim()) {
+                        console.warn('No TnC found for vehicle', vehicleId);
+                        return;
+                    }
 
-                    this.tncVehicleName    = card.dataset.vehicleName || '';
-                    this.tncVehicleId      = card.dataset.vehicleId   || null;
+                    this.tncVehicleName      = card.dataset.vehicleName || '';
+                    this.tncVehicleId        = vehicleId;
                     this.tncVehicleAvailable = card.dataset.available === 'true';
-                    this.tncContent        = this.formatTerms(tnc);
-                    this.showTncModal      = true;
+                    this.tncContent          = this.formatTerms(tnc);
+                    this.showTncModal        = true;
                 },
                 
                 // Legacy openModal kept for backward compat (unused now)
