@@ -585,15 +585,16 @@
                         <h3 class="text-base sm:text-xl font-display font-bold text-gray-900 leading-tight">{{ vehicle.name }}</h3>
 
                         <!-- TnC "See Details" link -->
-                      {% if vehicle.terms_and_conditions and vehicle.terms_and_conditions.strip() %}
-                    <div class="tnc-row mt-1.5">
-                        <button type="button"
-                                onclick="openTncPopup(this.closest('.bike-card'))"
-                                class="tnc-link">
-                            See T&C Details
-                        </button>
+                        {% if vehicle.terms_and_conditions and vehicle.terms_and_conditions.strip() %}
+                        <div class="tnc-row mt-1.5">
+                            <button type="button"
+                                    onclick="openTncPopup(this.closest('.bike-card'))"
+                                    class="tnc-link group">
+                                &#x1F4CB; See T&amp;C Details
+                            </button>
+                        </div>
+                        {% endif %}
                     </div>
-                    {% endif %}
 
                     <!-- Pricing (Desktop Only) -->
                     <div class="pricing-section space-y-2 mb-6 pb-6 border-b border-gray-100">
