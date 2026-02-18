@@ -1083,22 +1083,30 @@
 
                 // Open TnC popup from card
                 openTncFromCard(card) {
-                    const vehicleId = card.dataset.vehicleId || '';
-                    // Read TnC from JSON store (avoids HTML attribute encoding issues)
-                    const tnc = (typeof vehicleTncData !== 'undefined' && vehicleTncData[vehicleId]) 
-                                ? vehicleTncData[vehicleId] 
-                                : (card.dataset.tnc || '');
-                    if (!tnc || !tnc.trim()) {
-                        console.warn('No TnC found for vehicle', vehicleId);
-                        return;
-                    }
+    // 1. Ambil ID dan pastikan dalam bentuk string
+    const vehicleId = String(card.dataset.vehicleId || '');
+    
+    // 2. Ambil data dari storage JSON, pastikan jika kosong jadi string kosong (bukan null)
+    let tnc = "";
+    if (typeof vehicleTncData !== 'undefined' && vehicleTncData[vehicleId]) {
+        tnc = vehicleTncData[vehicleId];
+    }
 
-                    this.tncVehicleName      = card.dataset.vehicleName || '';
-                    this.tncVehicleId        = vehicleId;
-                    this.tncVehicleAvailable = card.dataset.available === 'true';
-                    this.tncContent          = this.formatTerms(tnc);
-                    this.showTncModal        = true;
-                },
+    // 3. Validasi: Jika tnc bukan string atau kosong, jangan lanjutkan
+    if (!tnc || typeof tnc !== 'string' || tnc.trim() === '') {
+        console.warn('TnC kosong atau tidak ditemukan untuk ID:', vehicleId);
+        // Opsional: berikan pesan default jika ingin tetap tampil
+        // tnc = "No specific terms for this vehicle."; 
+        return; 
+    }
+
+    // 4. Masukkan data ke variabel Alpine
+    this.tncVehicleName = card.dataset.vehicleName || '';
+    this.tncVehicleId = vehicleId;
+    this.tncVehicleAvailable = card.dataset.available === 'true';
+    this.tncContent = this.formatTerms(tnc); // Format menjadi HTML
+    this.showTncModal = true; // Tampilkan modal
+},
                 
                 // Legacy openModal kept for backward compat (unused now)
                 openModal(name, priceDay, price3Day, priceWeekly, priceMonthly, id, terms) {
