@@ -1171,14 +1171,14 @@
                         : `Delivery to: ${this.formData.deliveryAddress}`;
                     
                     const message = `Hello VehicleRent! I would like to book a vehicle:\n\n` +
-                        ` *Name:* ${this.formData.customerName}\n` +
-                        ` *IC/Passport:* ${this.formData.icNumber}\n` +
-                        ` *Nationality:* ${this.formData.nationality}\n` +
-                        ` *Pickup Method:* ${pickupText}\n` +
-                        ` *Destination:* ${this.formData.destination}\n\n` +
-                        ` *Vehicle:* ${this.selectedName}\n` +
-                        ` *Pickup Date & Time:* ${this.startDate}\n` +
-                        ` *Return Date & Time:* ${this.endDate}\n\n` +
+                        `👤 *Name:* ${this.formData.customerName}\n` +
+                        `🆔 *IC/Passport:* ${this.formData.icNumber}\n` +
+                        `🌏 *Nationality:* ${this.formData.nationality}\n` +
+                        `📍 *Pickup Method:* ${pickupText}\n` +
+                        `🎯 *Destination:* ${this.formData.destination}\n\n` +
+                        `🚗 *Vehicle:* ${this.selectedName}\n` +
+                        `📅 *Pickup Date & Time:* ${this.startDate}\n` +
+                        `🏁 *Return Date & Time:* ${this.endDate}\n\n` +
                         `Please confirm the availability and booking. Thank you!`;
                     
                     const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
