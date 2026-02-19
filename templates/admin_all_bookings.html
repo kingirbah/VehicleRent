@@ -370,7 +370,7 @@
                             <span class="text-xs md:text-sm font-semibold text-gray-700">Show All</span>
                         </label>
                     </div>
-                    <a href="/admin/bookings/print?status={{ current_status }}&vehicle={{ current_vehicle }}&month={{ current_month }}" target="_blank" class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg font-semibold transition shadow-lg w-full md:w-auto text-center">🖨️ Print Report</a>
+                    <a href="/admin/bookings/print?status={{ current_status }}&vehicle={{ current_vehicle }}&month={{ current_month }}" target="_blank" class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg font-semibold transition shadow-lg w-full md:w-auto text-center">Print Report</a>
                 </div>
             </form>
         </div>
@@ -416,13 +416,13 @@
                                 </td>
                                 <td class="px-6 py-4">
                                     <div class="text-sm font-semibold text-gray-900">{{ booking.customer_name }}</div>
-                                    {% if booking.nationality and booking.nationality != 'Malaysian' %}<div class="text-xs text-gray-600 mt-1">🌍 {{ booking.nationality }}</div>{% endif %}
+                                    {% if booking.nationality and booking.nationality != 'Malaysian' %}<div class="text-xs text-gray-600 mt-1"> {{ booking.nationality }}</div>{% endif %}
                                     {% if booking.ic_number %}<div class="text-xs text-gray-500">IC: {{ booking.ic_number }}</div>{% endif %}
                                 </td>
                                 <td class="px-6 py-4">
                                     <div class="text-sm font-semibold text-gray-900">{{ booking.vehicle_name }}</div>
                                     <div class="text-xs text-gray-600 mt-1">{{ booking.vehicle_type }}</div>
-                                    {% if booking.license_plate %}<div class="text-xs text-yellow-600 font-bold">🚗 {{ booking.license_plate }}</div>{% endif %}
+                                    {% if booking.license_plate %}<div class="text-xs text-yellow-600 font-bold"> {{ booking.license_plate }}</div>{% endif %}
                                 </td>
                                 <td class="px-6 py-4">
                                     <div class="text-xs text-green-600 font-semibold">📅 {{ booking.start_date }}</div>
@@ -436,10 +436,10 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <select data-booking-id="{{ booking.id }}" data-original-status="{{ booking.status }}" @change="updateStatus($event, {{ booking.id }})" class="status-select px-4 py-2 text-xs font-bold rounded-lg border-2 cursor-pointer transition {% if booking.status == 'confirmed' %}status-confirmed{% elif booking.status == 'pending' %}status-pending{% elif booking.status == 'completed' %}status-completed{% elif booking.status == 'cancelled' %}status-cancelled{% endif %}">
-                                        <option value="pending" {% if booking.status == 'pending' %}selected{% endif %}>⏳ Pending</option>
-                                        <option value="confirmed" {% if booking.status == 'confirmed' %}selected{% endif %}>✓ Confirmed</option>
-                                        <option value="completed" {% if booking.status == 'completed' %}selected{% endif %}>✓ Completed</option>
-                                        <option value="cancelled" {% if booking.status == 'cancelled' %}selected{% endif %}>✗ Cancelled</option>
+                                        <option value="pending" {% if booking.status == 'pending' %}selected{% endif %}>Pending</option>
+                                        <option value="confirmed" {% if booking.status == 'confirmed' %}selected{% endif %}>Confirmed</option>
+                                        <option value="completed" {% if booking.status == 'completed' %}selected{% endif %}>Completed</option>
+                                        <option value="cancelled" {% if booking.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
                                     </select>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-xs text-gray-600 font-medium">{{ booking.created_at.strftime('%Y-%m-%d %H:%M') if booking.created_at else 'N/A' }}</td>
@@ -493,10 +493,10 @@
                             <span class="text-red-600 font-semibold">{{ booking.end_date[5:] }} 📅</span>
                         </div>
                         <div class="flex items-center justify-between pt-1">
-                            {% if booking.total_price %}<span class="mobile-card-badge bg-green-100 text-green-700">💰 RM {{ "%.0f"|format(booking.total_price) }}</span>{% endif %}
+                            {% if booking.total_price %}<span class="mobile-card-badge bg-green-100 text-green-700">RM {{ "%.0f"|format(booking.total_price) }}</span>{% endif %}
                             <div class="flex gap-1">
-                                {% if booking.license_plate %}<span class="mobile-card-badge bg-yellow-100 text-yellow-700">🚗 {{ booking.license_plate }}</span>{% endif %}
-                                {% if booking.nationality and booking.nationality != 'Malaysian' %}<span class="mobile-card-badge bg-blue-100 text-blue-700">🌍</span>{% endif %}
+                                {% if booking.license_plate %}<span class="mobile-card-badge bg-yellow-100 text-yellow-700">{{ booking.license_plate }}</span>{% endif %}
+                                {% if booking.nationality and booking.nationality != 'Malaysian' %}<span class="mobile-card-badge bg-blue-100 text-blue-700"></span>{% endif %}
                             </div>
                         </div>
                     </div>
