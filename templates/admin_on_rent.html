@@ -9,6 +9,13 @@
     <style>
         body { font-family: 'Work Sans', sans-serif; }
         h1, h2, h3 { font-family: 'Sora', sans-serif; }
+
+        /* Nav link styles - sama seperti admin_catalog */
+        .nav-link { position: relative; transition: all 0.3s; }
+        .nav-link::after { content: ''; position: absolute; bottom: -2px; left: 0; width: 0; height: 2px; background: #2563eb; transition: width 0.3s; }
+        .nav-link:hover::after { width: 100%; }
+        .nav-link.active { color: #2563eb; font-weight: 600; }
+        .nav-link.active::after { width: 100%; }
         
         .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
@@ -25,14 +32,12 @@
 
         tbody tr { transition: all 0.2s ease; }
 
-        /* Overdue styles - ENHANCED */
+        /* Overdue styles */
         .overdue-row {
             background-color: #fef2f2 !important;
             border-left: 4px solid #dc2626;
         }
-        .overdue-row:hover {
-            background-color: #fee2e2 !important;
-        }
+        .overdue-row:hover { background-color: #fee2e2 !important; }
         .overdue-badge {
             animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
         }
@@ -44,83 +49,64 @@
             background-color: #fef2f2 !important;
             border-left: 4px solid #dc2626 !important;
         }
-
-        /* Mobile responsive */
-        @media (max-width: 768px) {
-            .mobile-nav-links {
-                display: grid;
-                grid-template-columns: repeat(2, 1fr);
-                gap: 0.5rem;
-                padding: 0.75rem;
-            }
-            
-            .mobile-nav-link {
-                padding: 0.5rem;
-                text-align: center;
-                font-size: 0.75rem;
-                border-radius: 0.5rem;
-                transition: all 0.2s;
-            }
-        }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col">
-    <!-- Navigation - CONSISTENT WITH OTHER PAGES -->
+
+    <!-- ===================== NAVBAR (sama persis seperti admin_catalog) ===================== -->
     <nav class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-3 md:px-4 lg:px-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-14 md:h-16">
-                <div class="flex items-center space-x-2 md:space-x-3">
-                    <div class="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-blue-600 to-blue-800 rounded-xl flex items-center justify-center">
-                        <svg class="w-5 h-5 md:w-6 md:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                <!-- Logo -->
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-blue-600 to-blue-800 rounded-lg md:rounded-xl flex items-center justify-center flex-shrink-0">
+                        <svg class="w-4 h-4 md:w-6 md:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
                         </svg>
                     </div>
                     <div>
-                        <h1 class="text-base md:text-xl font-bold text-gray-900">VehicleRent</h1>
-                        <p class="text-[0.625rem] md:text-xs text-gray-500">Currently On Rent</p>
+                        <h1 class="text-sm md:text-xl font-bold text-gray-900 leading-tight">VehicleRent Admin</h1>
+                        <p class="text-[10px] md:text-xs text-gray-500">Fleet Management</p>
                     </div>
                 </div>
-                
-                <!-- Desktop Navigation -->
+
+                <!-- Desktop Nav Links -->
                 <div class="hidden md:flex items-center space-x-6">
-                    <a href="/admin" class="text-sm text-gray-700 hover:text-blue-600 transition font-medium">
-                         Vehicles
-                    </a>
-                    <a href="/admin/bookings" class="text-sm text-gray-700 hover:text-blue-600 transition font-medium">
-                         All Bookings
-                    </a>
-                    <a href="/admin/on-rent" class="text-sm text-blue-600 font-semibold">
-                         On Rent
-                    </a>
-                    <a href="/admin/users" class="text-sm text-gray-700 hover:text-blue-600 transition font-medium">
-                         Users
-                    </a>
+                    <a href="/admin" class="nav-link text-sm text-gray-700 hover:text-blue-600 transition pb-1">Vehicles</a>
+                    <a href="/admin/bookings" class="nav-link text-sm text-gray-700 hover:text-blue-600 transition pb-1">All Bookings</a>
+                    <a href="/admin/on-rent" class="nav-link active text-sm text-gray-700 hover:text-blue-600 transition pb-1">On Rent</a>
+                    <a href="/admin/users" class="nav-link text-sm text-gray-700 hover:text-blue-600 transition pb-1">Users</a>
+                    <a href="/" target="_blank" class="nav-link text-sm text-gray-700 hover:text-blue-600 transition pb-1">Catalog</a>
                 </div>
-                
-                <div class="flex items-center">
-                    <a href="/logout" class="text-xs md:text-sm text-red-600 hover:text-red-700 font-semibold transition px-3 py-1.5 md:px-4 md:py-2 rounded-lg hover:bg-red-50">
-                        Logout
-                    </a>
+
+                <!-- Desktop Logout -->
+                <div class="hidden md:flex items-center space-x-3">
+                    <a href="/logout" class="text-sm text-red-600 hover:text-red-700 font-semibold transition px-4 py-2 rounded-lg hover:bg-red-50">Logout</a>
+                </div>
+
+                <!-- Mobile Hamburger Button -->
+                <div class="md:hidden flex items-center">
+                    <button id="mobile-menu-btn" class="text-gray-600 hover:text-blue-600 focus:outline-none p-2">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </button>
                 </div>
             </div>
+        </div>
 
-            <!-- Mobile Navigation Links -->
-            <div class="md:hidden mobile-nav-links pb-2">
-                <a href="/admin" class="mobile-nav-link bg-gray-100 text-gray-700 hover:bg-gray-200">
-                    🏍️ Vehicles
-                </a>
-                <a href="/admin/bookings" class="mobile-nav-link bg-gray-100 text-gray-700 hover:bg-gray-200">
-                    📋 Bookings
-                </a>
-                <a href="/admin/on-rent" class="mobile-nav-link bg-blue-600 text-white">
-                    🔄 On Rent
-                </a>
-                <a href="/admin/users" class="mobile-nav-link bg-gray-100 text-gray-700 hover:bg-gray-200">
-                    👥 Users
-                </a>
+        <!-- Mobile Dropdown Menu (sama seperti admin_catalog) -->
+        <div id="mobile-menu" class="hidden md:hidden bg-white border-b border-gray-100 shadow-lg absolute w-full left-0 top-14 z-40">
+            <div class="px-4 py-3 space-y-2">
+                <a href="/admin" class="block px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">Vehicles</a>
+                <a href="/admin/bookings" class="block px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">All Bookings</a>
+                <a href="/admin/on-rent" class="block px-3 py-2 rounded-md text-sm font-medium text-blue-700 bg-blue-50">On Rent</a>
+                <a href="/admin/users" class="block px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">Users</a>
+                <a href="/logout" class="block px-3 py-2 text-sm font-medium text-red-600 border-t mt-2 pt-2">Logout</a>
             </div>
         </div>
     </nav>
+    <!-- ===================== END NAVBAR ===================== -->
 
     <!-- Main Content -->
     <div class="flex-1 max-w-7xl mx-auto w-full px-3 md:px-4 lg:px-8 py-4 md:py-6">
@@ -147,7 +133,6 @@
                     <svg class="w-5 h-5 text-gray-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                     </svg>
-                    <!-- Clear button -->
                     <button 
                         id="clearSearch" 
                         class="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600 hidden"
@@ -184,7 +169,7 @@
                 </div>
             </div>
             
-            <!-- Overdue Alert (if any) -->
+            <!-- Overdue Alert -->
             <div id="overdueAlert" class="hidden mt-3 md:mt-4 bg-gradient-to-r from-red-500 to-red-600 rounded-xl p-4 shadow-lg">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center space-x-3">
@@ -322,7 +307,6 @@
                             </span>
                         </div>
                     </div>
-                    
                     <div class="flex justify-between items-end">
                         <div class="min-w-0">
                             <p class="text-xs text-gray-600 truncate max-w-[200px] customer-name">{{ booking.customer_name }}</p>
@@ -331,7 +315,6 @@
                                 <span class="nationality">{{ booking.nationality }}</span>
                             </p>
                         </div>
-                        
                         <svg class="w-4 h-4 text-gray-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
                         </svg>
@@ -340,7 +323,7 @@
                 {% endfor %}
             </div>
 
-            <!-- No Results Message (Hidden by default) -->
+            <!-- No Results Message -->
             <div id="noResults" class="hidden flex flex-col items-center justify-center py-20 text-center fade-in">
                 <div class="bg-gray-50 p-4 rounded-full mb-3">
                     <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -395,6 +378,12 @@
     </footer>
 
     <script>
+        // Mobile menu toggle - sama seperti admin_catalog
+        const btn = document.getElementById('mobile-menu-btn');
+        const menu = document.getElementById('mobile-menu');
+        btn.addEventListener('click', () => menu.classList.toggle('hidden'));
+
+        // Search logic
         const searchInput = document.getElementById('searchInput');
         const clearBtn = document.getElementById('clearSearch');
         const tableBody = document.getElementById('tableBody');
@@ -471,25 +460,20 @@
         }
 
         function calculateDueSoon() {
-            // FIXED: Use actual current time instead of hardcoded date
             const now = new Date();
             let dueSoonCount = 0;
 
             allRows.forEach(row => {
                 const endDate = row.getAttribute('data-end-date');
                 const endTime = row.getAttribute('data-end-time');
-                
                 if (endDate && endTime) {
                     try {
                         const [year, month, day] = endDate.split('-').map(Number);
                         const [hour, minute] = endTime.split(':').map(Number);
                         const dueDateTime = new Date(year, month - 1, day, hour, minute);
-                        
                         const hoursUntilDue = (dueDateTime - now) / (1000 * 60 * 60);
                         if (hoursUntilDue > 0 && hoursUntilDue <= 24) dueSoonCount++;
-                    } catch(e) {
-                        console.error('Date parse error:', e);
-                    }
+                    } catch(e) { console.error('Date parse error:', e); }
                 }
             });
 
@@ -497,15 +481,9 @@
         }
 
         function checkOverdueBookings() {
-            console.log('🔍 Checking overdue bookings...');
-            
-            // FIXED: Use actual current time instead of hardcoded date
             const now = new Date();
-            console.log('Current time:', now.toISOString());
-            
             let overdueCount = 0;
 
-            // Check desktop rows
             allRows.forEach(row => {
                 const status = row.getAttribute('data-status');
                 const endDate = row.getAttribute('data-end-date');
@@ -516,20 +494,16 @@
                         const [year, month, day] = endDate.split('-').map(Number);
                         const [hour, minute] = endTime.split(':').map(Number);
                         const dueDateTime = new Date(year, month - 1, day, hour, minute);
-                        
                         if (dueDateTime < now) {
                             overdueCount++;
                             row.classList.add('overdue-row');
                             const badge = row.querySelector('.overdue-label');
                             if (badge) badge.style.display = 'inline-block';
                         }
-                    } catch(e) {
-                        console.error('Parse error:', e);
-                    }
+                    } catch(e) { console.error('Parse error:', e); }
                 }
             });
 
-            // Check mobile cards
             allCards.forEach(card => {
                 const status = card.getAttribute('data-status');
                 const endDate = card.getAttribute('data-end-date');
@@ -540,19 +514,14 @@
                         const [year, month, day] = endDate.split('-').map(Number);
                         const [hour, minute] = endTime.split(':').map(Number);
                         const dueDateTime = new Date(year, month - 1, day, hour, minute);
-                        
                         if (dueDateTime < now) {
                             card.classList.add('overdue-card');
                             const badge = card.querySelector('.overdue-label-mobile');
                             if (badge) badge.style.display = 'inline-block';
                         }
-                    } catch(e) {
-                        console.error('Parse error:', e);
-                    }
+                    } catch(e) { console.error('Parse error:', e); }
                 }
             });
-
-            console.log(`📊 Total overdue: ${overdueCount}`);
 
             if (overdueCount > 0) {
                 const alert = document.getElementById('overdueAlert');
@@ -562,17 +531,12 @@
                     document.getElementById('overdueBigCount').textContent = overdueCount;
                 }
             }
-
-            return overdueCount;
         }
 
-        // Initialize on page load
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('Initializing...');
             calculateDueSoon();
             checkOverdueBookings();
             
-            // Keyboard shortcut: Press "/" to focus search
             document.addEventListener('keydown', function(e) {
                 if (e.key === '/' && !searchInput.matches(':focus')) {
                     e.preventDefault();
