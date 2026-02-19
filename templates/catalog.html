@@ -258,6 +258,14 @@
             margin: 0;
         }
 
+        .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: #fbbf24; /* warna amber-400 */
+    border-radius: 20px;
+}
+
         /* TnC Card Link */
         .tnc-link {
             color: #0052CC;
@@ -327,68 +335,67 @@
          TnC POPUP MODAL (standalone, lightweight)
     ====================================================== -->
     <div x-show="showTncModal"
-         x-cloak
+     x-cloak
+     x-transition:enter="transition ease-out duration-200"
+     x-transition:enter-start="opacity-0"
+     x-transition:enter-end="opacity-100"
+     x-transition:leave="transition ease-in duration-150"
+     x-transition:leave-start="opacity-100"
+     x-transition:leave-end="opacity-0"
+     class="fixed inset-0 z-[70] flex items-center justify-center p-4"
+     style="background: rgba(0,0,0,0.55); backdrop-filter: blur(6px);"
+     @click.self="showTncModal = false"
+     @keydown.escape.window="showTncModal = false">
+
+    <div class="tnc-modal-content w-full max-w-lg bg-white rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden"
          x-transition:enter="transition ease-out duration-200"
-         x-transition:enter-start="opacity-0"
-         x-transition:enter-end="opacity-100"
+         x-transition:enter-start="transform scale-90 opacity-0"
+         x-transition:enter-end="transform scale-100 opacity-100"
          x-transition:leave="transition ease-in duration-150"
-         x-transition:leave-start="opacity-100"
-         x-transition:leave-end="opacity-0"
-         class="fixed inset-0 z-[70] flex items-center justify-center p-4"
-         style="background: rgba(0,0,0,0.55); backdrop-filter: blur(6px);"
-         @click.self="showTncModal = false"
-         @keydown.escape.window="showTncModal = false">
+         x-transition:leave-start="transform scale-100 opacity-100"
+         x-transition:leave-end="transform scale-90 opacity-0">
 
-        <div class="tnc-modal-content w-full max-w-lg"
-             x-transition:enter="transition ease-out duration-200"
-             x-transition:enter-start="transform scale-90 opacity-0"
-             x-transition:enter-end="transform scale-100 opacity-100"
-             x-transition:leave="transition ease-in duration-150"
-             x-transition:leave-start="transform scale-100 opacity-100"
-             x-transition:leave-end="transform scale-90 opacity-0">
-
-            <!-- Header -->
-            <div class="bg-gradient-to-r from-amber-400 to-orange-500 p-5 rounded-t-2xl relative">
-                <button @click="showTncModal = false"
-                        class="absolute top-3 right-3 w-8 h-8 bg-white/20 hover:bg-white/40 rounded-full flex items-center justify-center transition text-white">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
+        <div class="bg-gradient-to-r from-amber-400 to-orange-500 p-5 relative flex-shrink-0">
+            <button @click="showTncModal = false"
+                    class="absolute top-3 right-3 w-8 h-8 bg-white/20 hover:bg-white/40 rounded-full flex items-center justify-center transition text-white">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow">
+                    <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                     </svg>
-                </button>
-                <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow">
-                        <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                        </svg>
-                    </div>
-                    <div>
-                        <h3 class="text-lg font-bold text-white leading-tight">Terms & Conditions</h3>
-                        <p class="text-amber-100 text-xs font-medium" x-text="tncVehicleName"></p>
-                    </div>
                 </div>
-            </div>
-
-            <!-- Body -->
-            <div class="p-5">
-                <div class="bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-100 rounded-xl p-4">
-                    <div class="tnc-popup-body" x-html="tncContent"></div>
-                </div>
-
-                <!-- Action buttons -->
-                <div class="mt-4 flex gap-3">
-                    <button @click="showTncModal = false"
-                            class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2.5 rounded-xl transition text-sm">
-                        Close
-                    </button>
-                    <button @click="showTncModal = false; openModalById(tncVehicleId)"
-                            x-show="tncVehicleAvailable"
-                            class="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold py-2.5 rounded-xl transition text-sm shadow">
-                        Book This Vehicle →
-                    </button>
+                <div>
+                    <h3 class="text-lg font-bold text-white leading-tight">Terms & Conditions</h3>
+                    <p class="text-amber-100 text-xs font-medium" x-text="tncVehicleName"></p>
                 </div>
             </div>
         </div>
+
+        <div class="p-5 overflow-y-auto flex-grow custom-scrollbar">
+            <div class="bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-100 rounded-xl p-4">
+                <div class="tnc-popup-body text-gray-700 leading-relaxed" x-html="tncContent"></div>
+            </div>
+        </div>
+
+        <div class="p-5 border-t border-gray-100 bg-gray-50/50 flex-shrink-0">
+            <div class="flex gap-3">
+                <button @click="showTncModal = false"
+                        class="flex-1 bg-white border border-gray-200 hover:bg-gray-100 text-gray-700 font-semibold py-2.5 rounded-xl transition text-sm">
+                    Close
+                </button>
+                <button @click="showTncModal = false; openModalById(tncVehicleId)"
+                        x-show="tncVehicleAvailable"
+                        class="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold py-2.5 rounded-xl transition text-sm shadow">
+                    Book This Vehicle →
+                </button>
+            </div>
+        </div>
     </div>
+</div>
 
     <!-- Custom Alert Modal -->
     <div x-show="showAlert" 
