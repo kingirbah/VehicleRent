@@ -172,21 +172,23 @@
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
         }
         
-        /* Custom scrollbar for modal */
-.overflow-y-auto::-webkit-scrollbar {
+        /* Scrollbar khusus booking modal */
+.modal-scroll::-webkit-scrollbar {
     width: 4px;
 }
 
-.overflow-y-auto::-webkit-scrollbar-track {
+.modal-scroll::-webkit-scrollbar-track {
     background: transparent;
+    margin-top: 2.5rem;
+    margin-bottom: 2.5rem;
 }
 
-.overflow-y-auto::-webkit-scrollbar-thumb {
+.modal-scroll::-webkit-scrollbar-thumb {
     background: #CBD5E1;
     border-radius: 99px;
 }
 
-.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+.modal-scroll::-webkit-scrollbar-thumb:hover {
     background: #94A3B8;
 }
         
@@ -671,7 +673,7 @@
          x-transition:enter-end="opacity-100"
          class="fixed inset-0 modal-backdrop z-50 flex items-end md:items-center justify-center p-0 md:p-4">
         
-        <div class="bg-white w-full max-w-2xl rounded-t-[2.5rem] md:rounded-[2.5rem] shadow-2xl relative max-h-[90vh] overflow-y-auto"
+        <div class="bg-white w-full max-w-2xl rounded-t-[2.5rem] md:rounded-[2.5rem] shadow-2xl relative max-h-[90vh] overflow-y-auto modal-scroll"
              x-transition:enter="transition ease-out duration-300"
              x-transition:enter-start="transform translate-y-full md:translate-y-0 md:scale-95 opacity-0"
              x-transition:enter-end="transform translate-y-0 md:scale-100 opacity-100"
