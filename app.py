@@ -1150,20 +1150,20 @@ def server_error(e):
 # --- STARTUP ---
 if __name__ == '__main__':
     print("\n" + "="*70)
-    print("🚀 VehicleRent Application Starting...")
+    print("VehicleRent Application Starting...")
     print("="*70)
     
-    print("\n📊 Checking database connection...")
+    print("\nChecking database connection...")
     try:
         init_db()
-        print("✅ Connected to PostgreSQL/Supabase successfully!")
+        print("Connected to PostgreSQL/Supabase successfully!")
     except Exception as e:
-        print(f"❌ Database connection failed: {e}")
-        print("\n⚠️  Please check your environment variables!")
+        print(f"Database connection failed: {e}")
+        print("\n Please check your environment variables!")
         print("Set either DATABASE_URL or individual SUPABASE_* variables")
         exit(1)
     
-    print("\n✅ Application Ready!")
+    print("\nApplication Ready!")
     print("="*70 + "\n")
     
     port = int(os.getenv('PORT', 5000))
