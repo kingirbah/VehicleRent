@@ -42,11 +42,7 @@
             border: 2px solid #86efac;
             background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23166534' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
         }
-        
-        .status-confirmed:hover {
-            background-color: #bbf7d0;
-            border-color: #4ade80;
-        }
+        .status-confirmed:hover { background-color: #bbf7d0; border-color: #4ade80; }
         
         .status-pending {
             background-color: #fef3c7;
@@ -54,11 +50,7 @@
             border: 2px solid #fde68a;
             background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23854d0e' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
         }
-        
-        .status-pending:hover {
-            background-color: #fde68a;
-            border-color: #fbbf24;
-        }
+        .status-pending:hover { background-color: #fde68a; border-color: #fbbf24; }
         
         .status-completed {
             background-color: #dbeafe;
@@ -66,11 +58,7 @@
             border: 2px solid #93c5fd;
             background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%231e40af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
         }
-        
-        .status-completed:hover {
-            background-color: #bfdbfe;
-            border-color: #60a5fa;
-        }
+        .status-completed:hover { background-color: #bfdbfe; border-color: #60a5fa; }
         
         .status-cancelled {
             background-color: #fee2e2;
@@ -78,310 +66,85 @@
             border: 2px solid #fecaca;
             background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23991b1b' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
         }
-        
-        .status-cancelled:hover {
-            background-color: #fecaca;
-            border-color: #f87171;
-        }
+        .status-cancelled:hover { background-color: #fecaca; border-color: #f87171; }
+
+        /* Nav link styles - sama seperti admin_catalog */
+        .nav-link { position: relative; transition: all 0.3s; }
+        .nav-link::after { content: ''; position: absolute; bottom: -2px; left: 0; width: 0; height: 2px; background: #2563eb; transition: width 0.3s; }
+        .nav-link:hover::after { width: 100%; }
+        .nav-link.active { color: #2563eb; font-weight: 600; }
+        .nav-link.active::after { width: 100%; }
         
         /* Toast notification animation */
         @keyframes slideInRight {
-            from {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
         }
-        
         @keyframes slideOutRight {
-            from {
-                transform: translateX(0);
-                opacity: 1;
-            }
-            to {
-                transform: translateX(100%);
-                opacity: 0;
-            }
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
         }
-        
-        .toast-enter {
-            animation: slideInRight 0.3s ease-out;
-        }
-        
-        .toast-exit {
-            animation: slideOutRight 0.3s ease-in;
-        }
+        .toast-enter { animation: slideInRight 0.3s ease-out; }
+        .toast-exit { animation: slideOutRight 0.3s ease-in; }
         
         /* Confirmation modal backdrop blur */
-        .modal-backdrop {
-            backdrop-filter: blur(4px);
-        }
+        .modal-backdrop { backdrop-filter: blur(4px); }
         
         /* Print styles */
         @media print {
-            body * {
-                visibility: hidden;
-            }
-            .print-area, .print-area * {
-                visibility: visible;
-            }
-            .print-area {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 100%;
-            }
-            .no-print {
-                display: none !important;
-            }
+            body * { visibility: hidden; }
+            .print-area, .print-area * { visibility: visible; }
+            .print-area { position: absolute; left: 0; top: 0; width: 100%; }
+            .no-print { display: none !important; }
         }
 
         /* MOBILE RESPONSIVE STYLES */
         @media (max-width: 768px) {
-            /* Mobile Navigation */
-            .mobile-nav-links {
-                display: grid;
-                grid-template-columns: repeat(2, 1fr);
-                gap: 0.5rem;
-                padding: 0.75rem;
-            }
-            
-            .mobile-nav-link {
-                padding: 0.5rem;
-                text-align: center;
-                font-size: 0.75rem;
-                border-radius: 0.5rem;
-                transition: all 0.2s;
-            }
-
-            /* Mobile Stats Cards - 2 columns */
-            .stats-grid-mobile {
-                grid-template-columns: repeat(2, 1fr) !important;
-                gap: 0.5rem !important;
-            }
-
-            .stat-card-mobile {
-                padding: 0.75rem !important;
-            }
-
-            .stat-card-mobile .stat-icon {
-                width: 2rem !important;
-                height: 2rem !important;
-            }
-
-            .stat-card-mobile .stat-icon svg {
-                width: 1rem !important;
-                height: 1rem !important;
-            }
-
-            .stat-card-mobile .stat-title {
-                font-size: 0.625rem !important;
-            }
-
-            .stat-card-mobile .stat-value {
-                font-size: 1.25rem !important;
-                margin-top: 0.25rem !important;
-            }
-
-            /* Mobile Filter Form */
-            .filter-grid-mobile {
-                grid-template-columns: 1fr !important;
-                gap: 0.75rem !important;
-            }
-
-            .filter-grid-mobile label {
-                font-size: 0.75rem !important;
-                margin-bottom: 0.25rem !important;
-            }
-
-            .filter-grid-mobile input,
-            .filter-grid-mobile select {
-                padding: 0.5rem !important;
-                font-size: 0.875rem !important;
-            }
-
-            /* Mobile Buttons */
-            .mobile-btn-group {
-                flex-direction: column;
-                gap: 0.5rem !important;
-            }
-
-            .mobile-btn-group button,
-            .mobile-btn-group a {
-                width: 100%;
-                padding: 0.625rem !important;
-                font-size: 0.875rem !important;
-            }
-
-            /* Mobile Pagination */
-            .mobile-pagination {
-                font-size: 0.75rem !important;
-                padding: 0.75rem !important;
-            }
-
-            .mobile-pagination a {
-                padding: 0.5rem 0.75rem !important;
-                font-size: 0.75rem !important;
-            }
-
-            /* Mobile Table - Card View - COMPACT */
-            .mobile-table-card {
-                background: white;
-                border-radius: 0.5rem;
-                padding: 0.5rem;
-                margin-bottom: 0.375rem;
-                border: 1px solid #e5e7eb;
-                box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-            }
-
-            .mobile-card-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: flex-start;
-                margin-bottom: 0.5rem;
-                padding-bottom: 0.5rem;
-                border-bottom: 1px solid #f3f4f6;
-            }
-
-            .mobile-card-row {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                padding: 0.25rem 0;
-                font-size: 0.6875rem;
-                line-height: 1.2;
-            }
-
-            .mobile-card-label {
-                color: #6b7280;
-                font-weight: 600;
-                font-size: 0.5625rem;
-                text-transform: uppercase;
-                letter-spacing: 0.025em;
-            }
-
-            .mobile-card-value {
-                font-weight: 600;
-                text-align: right;
-                font-size: 0.6875rem;
-            }
-
-            .mobile-card-compact-info {
-                display: flex;
-                gap: 0.5rem;
-                flex-wrap: wrap;
-                margin-top: 0.375rem;
-            }
-
-            .mobile-card-badge {
-                display: inline-flex;
-                align-items: center;
-                padding: 0.125rem 0.375rem;
-                border-radius: 0.25rem;
-                font-size: 0.5625rem;
-                font-weight: 700;
-                line-height: 1.2;
-            }
-
-            /* Mobile Status Select - COMPACT */
-            .mobile-status-select {
-                padding: 0.25rem 1.25rem 0.25rem 0.375rem !important;
-                font-size: 0.5625rem !important;
-                width: auto;
-                min-width: 90px;
-                background-size: 1em 1em;
-                background-position: right 0.25rem center;
-            }
-
-            /* Mobile Toast */
-            .mobile-toast-container {
-                top: 4rem !important;
-                right: 0.5rem !important;
-                left: 0.5rem !important;
-                width: auto !important;
-            }
-
-            /* Mobile Modal */
-            .mobile-modal-content {
-                max-height: 85vh !important;
-                margin: 0.5rem !important;
-            }
-
-            .mobile-modal-header {
-                padding: 1rem !important;
-            }
-
-            .mobile-modal-header h2 {
-                font-size: 1.25rem !important;
-            }
-
-            .mobile-modal-body {
-                padding: 1rem !important;
-            }
-
-            .mobile-modal-section {
-                padding: 0.75rem !important;
-                margin-bottom: 0.75rem !important;
-            }
-
-            .mobile-modal-section h3 {
-                font-size: 0.875rem !important;
-                margin-bottom: 0.5rem !important;
-            }
-
-            .mobile-modal-section p {
-                font-size: 0.75rem !important;
-            }
-
-            .mobile-modal-footer {
-                padding: 0.75rem !important;
-                gap: 0.5rem !important;
-            }
-
-            .mobile-modal-footer button {
-                padding: 0.625rem !important;
-                font-size: 0.875rem !important;
-            }
-
-            /* Hide desktop table on mobile */
-            .desktop-table {
-                display: none;
-            }
-
-            /* Show mobile cards */
-            .mobile-cards {
-                display: block;
-            }
-
-            /* Mobile confirmation modal */
-            .mobile-confirm-modal {
-                padding: 1rem !important;
-            }
-
-            .mobile-confirm-icon {
-                width: 3rem !important;
-                height: 3rem !important;
-            }
-
-            .mobile-confirm-icon svg {
-                width: 1.5rem !important;
-                height: 1.5rem !important;
-            }
+            .stats-grid-mobile { grid-template-columns: repeat(2, 1fr) !important; gap: 0.5rem !important; }
+            .stat-card-mobile { padding: 0.75rem !important; }
+            .stat-card-mobile .stat-icon { width: 2rem !important; height: 2rem !important; }
+            .stat-card-mobile .stat-icon svg { width: 1rem !important; height: 1rem !important; }
+            .stat-card-mobile .stat-title { font-size: 0.625rem !important; }
+            .stat-card-mobile .stat-value { font-size: 1.25rem !important; margin-top: 0.25rem !important; }
+            .filter-grid-mobile { grid-template-columns: 1fr !important; gap: 0.75rem !important; }
+            .filter-grid-mobile label { font-size: 0.75rem !important; margin-bottom: 0.25rem !important; }
+            .filter-grid-mobile input, .filter-grid-mobile select { padding: 0.5rem !important; font-size: 0.875rem !important; }
+            .mobile-btn-group { flex-direction: column; gap: 0.5rem !important; }
+            .mobile-btn-group button, .mobile-btn-group a { width: 100%; padding: 0.625rem !important; font-size: 0.875rem !important; }
+            .mobile-pagination { font-size: 0.75rem !important; padding: 0.75rem !important; }
+            .mobile-pagination a { padding: 0.5rem 0.75rem !important; font-size: 0.75rem !important; }
+            .mobile-table-card { background: white; border-radius: 0.5rem; padding: 0.5rem; margin-bottom: 0.375rem; border: 1px solid #e5e7eb; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+            .mobile-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid #f3f4f6; }
+            .mobile-card-row { display: flex; justify-content: space-between; align-items: center; padding: 0.25rem 0; font-size: 0.6875rem; line-height: 1.2; }
+            .mobile-card-label { color: #6b7280; font-weight: 600; font-size: 0.5625rem; text-transform: uppercase; letter-spacing: 0.025em; }
+            .mobile-card-value { font-weight: 600; text-align: right; font-size: 0.6875rem; }
+            .mobile-card-badge { display: inline-flex; align-items: center; padding: 0.125rem 0.375rem; border-radius: 0.25rem; font-size: 0.5625rem; font-weight: 700; line-height: 1.2; }
+            .mobile-status-select { padding: 0.25rem 1.25rem 0.25rem 0.375rem !important; font-size: 0.5625rem !important; width: auto; min-width: 90px; background-size: 1em 1em; background-position: right 0.25rem center; }
+            .mobile-toast-container { top: 4rem !important; right: 0.5rem !important; left: 0.5rem !important; width: auto !important; }
+            .mobile-modal-content { max-height: 85vh !important; margin: 0.5rem !important; }
+            .mobile-modal-header { padding: 1rem !important; }
+            .mobile-modal-header h2 { font-size: 1.25rem !important; }
+            .mobile-modal-body { padding: 1rem !important; }
+            .mobile-modal-section { padding: 0.75rem !important; margin-bottom: 0.75rem !important; }
+            .mobile-modal-section h3 { font-size: 0.875rem !important; margin-bottom: 0.5rem !important; }
+            .mobile-modal-section p { font-size: 0.75rem !important; }
+            .mobile-modal-footer { padding: 0.75rem !important; gap: 0.5rem !important; }
+            .mobile-modal-footer button { padding: 0.625rem !important; font-size: 0.875rem !important; }
+            .desktop-table { display: none; }
+            .mobile-cards { display: block; }
+            .mobile-confirm-modal { padding: 1rem !important; }
+            .mobile-confirm-icon { width: 3rem !important; height: 3rem !important; }
+            .mobile-confirm-icon svg { width: 1.5rem !important; height: 1.5rem !important; }
         }
 
-        /* Desktop - hide mobile cards */
         @media (min-width: 769px) {
-            .mobile-cards {
-                display: none;
-            }
+            .mobile-cards { display: none; }
         }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen" x-data="bookingManagement()">
-    <!-- Toast Notification Container - RESPONSIVE -->
+
+    <!-- Toast Notification Container -->
     <div class="fixed z-[100] space-y-2 mobile-toast-container md:top-20 md:right-6 md:w-80" style="top: 4rem; right: 0.5rem; left: 0.5rem;" x-cloak>
         <template x-for="toast in toasts" :key="toast.id">
             <div 
@@ -397,46 +160,17 @@
                 <div class="p-3">
                     <div class="flex items-start">
                         <div class="flex-shrink-0 pt-0.5">
-                            <!-- Success Icon -->
-                            <svg x-show="toast.type === 'success'" class="h-5 w-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                            <!-- Error Icon -->
-                            <svg x-show="toast.type === 'error'" class="h-5 w-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                            <!-- Info Icon -->
-                            <svg x-show="toast.type === 'info'" class="h-5 w-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
+                            <svg x-show="toast.type === 'success'" class="h-5 w-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <svg x-show="toast.type === 'error'" class="h-5 w-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <svg x-show="toast.type === 'info'" class="h-5 w-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                         </div>
                         <div class="ml-2 w-0 flex-1">
-                            <p class="text-xs font-bold" 
-                               :class="{
-                                   'text-green-800': toast.type === 'success',
-                                   'text-red-800': toast.type === 'error',
-                                   'text-blue-800': toast.type === 'info'
-                               }"
-                               x-text="toast.title"></p>
-                            <p class="mt-0.5 text-xs" 
-                               :class="{
-                                   'text-green-600': toast.type === 'success',
-                                   'text-red-600': toast.type === 'error',
-                                   'text-blue-600': toast.type === 'info'
-                               }"
-                               x-text="toast.message"></p>
+                            <p class="text-xs font-bold" :class="{'text-green-800': toast.type === 'success','text-red-800': toast.type === 'error','text-blue-800': toast.type === 'info'}" x-text="toast.title"></p>
+                            <p class="mt-0.5 text-xs" :class="{'text-green-600': toast.type === 'success','text-red-600': toast.type === 'error','text-blue-600': toast.type === 'info'}" x-text="toast.message"></p>
                         </div>
                         <div class="ml-2 flex-shrink-0 flex">
-                            <button @click="removeToast(toast.id)" 
-                                    class="inline-flex rounded-md p-1 focus:outline-none transition hover:bg-white/50"
-                                    :class="{
-                                        'text-green-500': toast.type === 'success',
-                                        'text-red-500': toast.type === 'error',
-                                        'text-blue-500': toast.type === 'info'
-                                    }">
-                                <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
-                                </svg>
+                            <button @click="removeToast(toast.id)" class="inline-flex rounded-md p-1 focus:outline-none transition hover:bg-white/50" :class="{'text-green-500': toast.type === 'success','text-red-500': toast.type === 'error','text-blue-500': toast.type === 'info'}">
+                                <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
                             </button>
                         </div>
                     </div>
@@ -445,11 +179,8 @@
         </template>
     </div>
 
-    <!-- Confirmation Modal - RESPONSIVE -->
-    <div x-show="showConfirmModal" 
-         x-cloak
-         @click.self="cancelConfirmation()"
-         class="fixed inset-0 bg-black/50 modal-backdrop z-[90] flex items-center justify-center p-4">
+    <!-- Confirmation Modal -->
+    <div x-show="showConfirmModal" x-cloak @click.self="cancelConfirmation()" class="fixed inset-0 bg-black/50 modal-backdrop z-[90] flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl shadow-2xl w-full transform transition-all mobile-confirm-modal md:max-w-md"
              x-show="showConfirmModal"
              x-transition:enter="transition ease-out duration-300"
@@ -458,110 +189,80 @@
              x-transition:leave="transition ease-in duration-200"
              x-transition:leave-start="opacity-100 scale-100"
              x-transition:leave-end="opacity-0 scale-95">
-            
-            <!-- Icon -->
-            <div class="p-6 pb-4 md:p-6 md:pb-4">
+            <div class="p-6 pb-4">
                 <div class="mx-auto flex items-center justify-center mobile-confirm-icon md:h-16 md:w-16 rounded-full bg-yellow-100">
-                    <svg class="text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-                    </svg>
+                    <svg class="text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
                 </div>
             </div>
-            
-            <!-- Content -->
             <div class="px-4 pb-4 md:px-6 md:pb-6">
                 <h3 class="text-base md:text-lg font-bold text-gray-900 text-center mb-2">Confirm Status Change</h3>
-                <p class="text-xs md:text-sm text-gray-600 text-center mb-4">
-                    Are you sure you want to change the status to 
-                    <span class="font-bold" :class="{
-                        'text-green-600': confirmData.newStatus === 'confirmed',
-                        'text-yellow-600': confirmData.newStatus === 'pending',
-                        'text-blue-600': confirmData.newStatus === 'completed',
-                        'text-red-600': confirmData.newStatus === 'cancelled'
-                    }" x-text="confirmData.newStatus?.toUpperCase()"></span>?
-                </p>
+                <p class="text-xs md:text-sm text-gray-600 text-center mb-4">Are you sure you want to change the status to <span class="font-bold" :class="{'text-green-600': confirmData.newStatus === 'confirmed','text-yellow-600': confirmData.newStatus === 'pending','text-blue-600': confirmData.newStatus === 'completed','text-red-600': confirmData.newStatus === 'cancelled'}" x-text="confirmData.newStatus?.toUpperCase()"></span>?</p>
             </div>
-            
-            <!-- Actions -->
             <div class="bg-gray-50 px-4 py-3 md:px-6 md:py-4 rounded-b-2xl flex gap-2 md:gap-3">
-                <button @click="cancelConfirmation()" 
-                        class="flex-1 bg-white border-2 border-gray-300 text-gray-700 px-3 py-2 md:px-4 md:py-2.5 rounded-lg text-sm md:text-base font-semibold hover:bg-gray-50 transition">
-                    Cancel
-                </button>
-                <button @click="confirmStatusUpdate()" 
-                        class="flex-1 px-3 py-2 md:px-4 md:py-2.5 rounded-lg text-sm md:text-base font-semibold text-white transition shadow-lg"
-                        :class="{
-                            'bg-green-600 hover:bg-green-700': confirmData.newStatus === 'confirmed',
-                            'bg-yellow-600 hover:bg-yellow-700': confirmData.newStatus === 'pending',
-                            'bg-blue-600 hover:bg-blue-700': confirmData.newStatus === 'completed',
-                            'bg-red-600 hover:bg-red-700': confirmData.newStatus === 'cancelled'
-                        }">
-                    Confirm
-                </button>
+                <button @click="cancelConfirmation()" class="flex-1 bg-white border-2 border-gray-300 text-gray-700 px-3 py-2 md:px-4 md:py-2.5 rounded-lg text-sm md:text-base font-semibold hover:bg-gray-50 transition">Cancel</button>
+                <button @click="confirmStatusUpdate()" class="flex-1 px-3 py-2 md:px-4 md:py-2.5 rounded-lg text-sm md:text-base font-semibold text-white transition shadow-lg" :class="{'bg-green-600 hover:bg-green-700': confirmData.newStatus === 'confirmed','bg-yellow-600 hover:bg-yellow-700': confirmData.newStatus === 'pending','bg-blue-600 hover:bg-blue-700': confirmData.newStatus === 'completed','bg-red-600 hover:bg-red-700': confirmData.newStatus === 'cancelled'}">Confirm</button>
             </div>
         </div>
     </div>
 
-    <!-- Navigation - RESPONSIVE -->
+    <!-- ===================== NAVBAR (sama persis seperti admin_catalog) ===================== -->
     <nav class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-3 md:px-4 lg:px-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-14 md:h-16">
-                <div class="flex items-center space-x-2 md:space-x-3">
-                    <div class="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-blue-600 to-blue-800 rounded-xl flex items-center justify-center">
-                        <svg class="w-5 h-5 md:w-6 md:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                <!-- Logo -->
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-blue-600 to-blue-800 rounded-lg md:rounded-xl flex items-center justify-center flex-shrink-0">
+                        <svg class="w-4 h-4 md:w-6 md:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
                         </svg>
                     </div>
                     <div>
-                        <h1 class="text-base md:text-xl font-bold text-gray-900">VehicleRent</h1>
-                        <p class="text-[0.625rem] md:text-xs text-gray-500">All Bookings</p>
+                        <h1 class="text-sm md:text-xl font-bold text-gray-900 leading-tight">VehicleRent Admin</h1>
+                        <p class="text-[10px] md:text-xs text-gray-500">Fleet Management</p>
                     </div>
                 </div>
-                
-                <!-- Desktop Navigation -->
+
+                <!-- Desktop Nav Links -->
                 <div class="hidden md:flex items-center space-x-6">
-                    <a href="/admin" class="text-sm text-gray-700 hover:text-blue-600 transition font-medium">
-                         Vehicles
-                    </a>
-                    <a href="/admin/bookings" class="text-sm text-blue-600 font-semibold">
-                         All Bookings
-                    </a>
-                    <a href="/admin/on-rent" class="text-sm text-gray-700 hover:text-blue-600 transition font-medium">
-                         On Rent
-                    </a>
-                    <a href="/admin/users" class="text-sm text-gray-700 hover:text-blue-600 transition font-medium">
-                         Users
-                    </a>
+                    <a href="/admin" class="nav-link text-sm text-gray-700 hover:text-blue-600 transition pb-1">Vehicles</a>
+                    <a href="/admin/bookings" class="nav-link active text-sm text-gray-700 hover:text-blue-600 transition pb-1">All Bookings</a>
+                    <a href="/admin/on-rent" class="nav-link text-sm text-gray-700 hover:text-blue-600 transition pb-1">On Rent</a>
+                    <a href="/admin/users" class="nav-link text-sm text-gray-700 hover:text-blue-600 transition pb-1">Users</a>
+                    <a href="/" target="_blank" class="nav-link text-sm text-gray-700 hover:text-blue-600 transition pb-1">Catalog</a>
                 </div>
-                
-                <div class="flex items-center">
-                    <a href="/logout" class="text-xs md:text-sm text-red-600 hover:text-red-700 font-semibold transition px-3 py-1.5 md:px-4 md:py-2 rounded-lg hover:bg-red-50">
-                        Logout
-                    </a>
+
+                <!-- Desktop Logout -->
+                <div class="hidden md:flex items-center space-x-3">
+                    <a href="/logout" class="text-sm text-red-600 hover:text-red-700 font-semibold transition px-4 py-2 rounded-lg hover:bg-red-50">Logout</a>
+                </div>
+
+                <!-- Mobile Hamburger Button -->
+                <div class="md:hidden flex items-center">
+                    <button id="mobile-menu-btn" class="text-gray-600 hover:text-blue-600 focus:outline-none p-2">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </button>
                 </div>
             </div>
+        </div>
 
-            <!-- Mobile Navigation Links -->
-            <div class="md:hidden mobile-nav-links pb-2">
-                <a href="/admin" class="mobile-nav-link bg-gray-100 text-gray-700 hover:bg-gray-200">
-                    🏍️ Vehicles
-                </a>
-                <a href="/admin/bookings" class="mobile-nav-link bg-blue-600 text-white">
-                    📋 Bookings
-                </a>
-                <a href="/admin/on-rent" class="mobile-nav-link bg-gray-100 text-gray-700 hover:bg-gray-200">
-                    🔄 On Rent
-                </a>
-                <a href="/admin/users" class="mobile-nav-link bg-gray-100 text-gray-700 hover:bg-gray-200">
-                    👥 Users
-                </a>
+        <!-- Mobile Dropdown Menu (sama seperti admin_catalog) -->
+        <div id="mobile-menu" class="hidden md:hidden bg-white border-b border-gray-100 shadow-lg absolute w-full left-0 top-14 z-40">
+            <div class="px-4 py-3 space-y-2">
+                <a href="/admin" class="block px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">Vehicles</a>
+                <a href="/admin/bookings" class="block px-3 py-2 rounded-md text-sm font-medium text-blue-700 bg-blue-50">All Bookings</a>
+                <a href="/admin/on-rent" class="block px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">On Rent</a>
+                <a href="/admin/users" class="block px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">Users</a>
+                <a href="/logout" class="block px-3 py-2 text-sm font-medium text-red-600 border-t mt-2 pt-2">Logout</a>
             </div>
         </div>
     </nav>
+    <!-- ===================== END NAVBAR ===================== -->
 
     <div class="max-w-7xl mx-auto px-3 md:px-4 lg:px-8 py-4 md:py-8">
         
-        <!-- Statistics Dashboard - RESPONSIVE -->
+        <!-- Statistics Dashboard -->
         <div class="grid stats-grid-mobile md:grid-cols-5 gap-4 mb-4 md:mb-8">
             <div class="bg-white stat-card-mobile md:p-6 rounded-xl shadow-sm border-2 border-gray-200">
                 <div class="flex items-center justify-between">
@@ -570,13 +271,10 @@
                         <p class="stat-value md:text-3xl font-bold text-gray-900">{{ stats.total }}</p>
                     </div>
                     <div class="stat-icon md:w-12 md:h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                        <svg class="text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                        </svg>
+                        <svg class="text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                     </div>
                 </div>
             </div>
-
             <div class="bg-white stat-card-mobile md:p-6 rounded-xl shadow-sm border-2 border-green-200 bg-green-50">
                 <div class="flex items-center justify-between">
                     <div>
@@ -584,13 +282,10 @@
                         <p class="stat-value md:text-3xl font-bold text-green-600">{{ stats.confirmed }}</p>
                     </div>
                     <div class="stat-icon md:w-12 md:h-12 bg-green-500 rounded-full flex items-center justify-center shadow-lg">
-                        <svg class="text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                        </svg>
+                        <svg class="text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                     </div>
                 </div>
             </div>
-
             <div class="bg-white stat-card-mobile md:p-6 rounded-xl shadow-sm border-2 border-yellow-200 bg-yellow-50">
                 <div class="flex items-center justify-between">
                     <div>
@@ -598,13 +293,10 @@
                         <p class="stat-value md:text-3xl font-bold text-yellow-600">{{ stats.pending }}</p>
                     </div>
                     <div class="stat-icon md:w-12 md:h-12 bg-yellow-500 rounded-full flex items-center justify-center shadow-lg">
-                        <svg class="text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
+                        <svg class="text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     </div>
                 </div>
             </div>
-
             <div class="bg-white stat-card-mobile md:p-6 rounded-xl shadow-sm border-2 border-blue-200 bg-blue-50">
                 <div class="flex items-center justify-between">
                     <div>
@@ -612,13 +304,10 @@
                         <p class="stat-value md:text-3xl font-bold text-blue-600">{{ stats.completed }}</p>
                     </div>
                     <div class="stat-icon md:w-12 md:h-12 bg-blue-500 rounded-full flex items-center justify-center shadow-lg">
-                        <svg class="text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-                        </svg>
+                        <svg class="text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
                     </div>
                 </div>
             </div>
-
             <div class="bg-white stat-card-mobile md:p-6 rounded-xl shadow-sm border-2 border-red-200 bg-red-50">
                 <div class="flex items-center justify-between">
                     <div>
@@ -626,28 +315,20 @@
                         <p class="stat-value md:text-3xl font-bold text-red-600">{{ stats.cancelled }}</p>
                     </div>
                     <div class="stat-icon md:w-12 md:h-12 bg-red-500 rounded-full flex items-center justify-center shadow-lg">
-                        <svg class="text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                        </svg>
+                        <svg class="text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Filters and Search - RESPONSIVE -->
+        <!-- Filters and Search -->
         <div class="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-3 md:p-6 mb-4 md:mb-6">
             <form method="GET" action="/admin/bookings" class="space-y-3 md:space-y-4">
                 <div class="grid filter-grid-mobile md:grid-cols-5 gap-4">
-                    <!-- Month Filter -->
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">Month</label>
-                        <input type="month" 
-                               name="month" 
-                               value="{{ current_month }}"
-                               class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition">
+                        <input type="month" name="month" value="{{ current_month }}" class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition">
                     </div>
-
-                    <!-- Status Filter -->
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">Status</label>
                         <select name="status" class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition">
@@ -658,31 +339,19 @@
                             <option value="cancelled" {% if current_status == 'cancelled' %}selected{% endif %}>Cancelled</option>
                         </select>
                     </div>
-
-                    <!-- Vehicle Filter -->
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">Vehicle</label>
                         <select name="vehicle" class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition">
                             <option value="all" {% if current_vehicle == 'all' %}selected{% endif %}>All Vehicles</option>
                             {% for v in vehicles %}
-                            <option value="{{ v.id }}" {% if current_vehicle == v.id|string %}selected{% endif %}>
-                                {{ v.name }}{% if v.license_plate %} ({{ v.license_plate }}){% endif %}
-                            </option>
+                            <option value="{{ v.id }}" {% if current_vehicle == v.id|string %}selected{% endif %}>{{ v.name }}{% if v.license_plate %} ({{ v.license_plate }}){% endif %}</option>
                             {% endfor %}
                         </select>
                     </div>
-
-                    <!-- Search -->
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">Search</label>
-                        <input type="text" 
-                               name="search" 
-                               value="{{ current_search }}"
-                               placeholder="Booking #, Name, IC..." 
-                               class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition">
+                        <input type="text" name="search" value="{{ current_search }}" placeholder="Booking #, Name, IC..." class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition">
                     </div>
-
-                    <!-- Sort By -->
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">Sort By</label>
                         <select name="sort" class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition">
@@ -693,53 +362,30 @@
                         </select>
                     </div>
                 </div>
-
                 <div class="flex items-center justify-between flex-wrap gap-3 mobile-btn-group md:flex-row">
                     <div class="flex items-center gap-2 md:gap-3 w-full md:w-auto">
-                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold transition shadow-lg flex-1 md:flex-initial">
-                            Apply Filters
-                        </button>
-                        
+                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold transition shadow-lg flex-1 md:flex-initial">Apply Filters</button>
                         <label class="flex items-center space-x-2 cursor-pointer">
-                            <input type="checkbox" 
-                                   name="show_all" 
-                                   value="1" 
-                                   {% if show_all %}checked{% endif %}
-                                   onchange="this.form.submit()"
-                                   class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                            <input type="checkbox" name="show_all" value="1" {% if show_all %}checked{% endif %} onchange="this.form.submit()" class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
                             <span class="text-xs md:text-sm font-semibold text-gray-700">Show All</span>
                         </label>
                     </div>
-                    
-                    <a href="/admin/bookings/print?status={{ current_status }}&vehicle={{ current_vehicle }}&month={{ current_month }}" 
-                       target="_blank"
-                       class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg font-semibold transition shadow-lg w-full md:w-auto text-center">
-                        🖨️ Print Report
-                    </a>
+                    <a href="/admin/bookings/print?status={{ current_status }}&vehicle={{ current_vehicle }}&month={{ current_month }}" target="_blank" class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg font-semibold transition shadow-lg w-full md:w-auto text-center">🖨️ Print Report</a>
                 </div>
             </form>
         </div>
 
-        <!-- Pagination Info - RESPONSIVE -->
+        <!-- Pagination Info -->
         {% if total_pages > 1 %}
         <div class="bg-blue-50 border-2 border-blue-200 rounded-xl mobile-pagination md:p-4 mb-4 md:mb-6">
             <div class="flex flex-col md:flex-row items-center justify-between gap-2 md:gap-0">
-                <div class="text-xs md:text-sm text-blue-700 font-semibold text-center md:text-left">
-                    Page {{ page }} of {{ total_pages }} ({{ total_bookings }} total)
-                </div>
+                <div class="text-xs md:text-sm text-blue-700 font-semibold text-center md:text-left">Page {{ page }} of {{ total_pages }} ({{ total_bookings }} total)</div>
                 <div class="flex items-center space-x-2">
                     {% if page > 1 %}
-                    <a href="?page={{ page - 1 }}&status={{ current_status }}&vehicle={{ current_vehicle }}&search={{ current_search }}&sort={{ current_sort }}&month={{ current_month }}&show_all={{ '1' if show_all else '0' }}" 
-                       class="bg-white border-2 border-blue-500 text-blue-700 px-4 py-2 rounded-lg font-semibold hover:bg-blue-50 transition">
-                        ← Prev
-                    </a>
+                    <a href="?page={{ page - 1 }}&status={{ current_status }}&vehicle={{ current_vehicle }}&search={{ current_search }}&sort={{ current_sort }}&month={{ current_month }}&show_all={{ '1' if show_all else '0' }}" class="bg-white border-2 border-blue-500 text-blue-700 px-4 py-2 rounded-lg font-semibold hover:bg-blue-50 transition">← Prev</a>
                     {% endif %}
-                    
                     {% if page < total_pages %}
-                    <a href="?page={{ page + 1 }}&status={{ current_status }}&vehicle={{ current_vehicle }}&search={{ current_search }}&sort={{ current_sort }}&month={{ current_month }}&show_all={{ '1' if show_all else '0' }}" 
-                       class="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition">
-                        Next →
-                    </a>
+                    <a href="?page={{ page + 1 }}&status={{ current_status }}&vehicle={{ current_vehicle }}&search={{ current_search }}&sort={{ current_sort }}&month={{ current_month }}&show_all={{ '1' if show_all else '0' }}" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition">Next →</a>
                     {% endif %}
                 </div>
             </div>
@@ -764,30 +410,19 @@
                     <tbody class="divide-y divide-gray-200">
                         {% if bookings %}
                             {% for booking in bookings %}
-                            <tr class="hover:bg-blue-50 transition" 
-                                x-data="{ bookingData: {{ booking|tojson }} }">
+                            <tr class="hover:bg-blue-50 transition" x-data="{ bookingData: {{ booking|tojson }} }">
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <button @click="openDetailModal(bookingData)" 
-                                            type="button"
-                                            class="text-sm font-bold text-blue-600 hover:text-blue-800 hover:underline cursor-pointer">
-                                        {{ booking.booking_number }}
-                                    </button>
+                                    <button @click="openDetailModal(bookingData)" type="button" class="text-sm font-bold text-blue-600 hover:text-blue-800 hover:underline cursor-pointer">{{ booking.booking_number }}</button>
                                 </td>
                                 <td class="px-6 py-4">
                                     <div class="text-sm font-semibold text-gray-900">{{ booking.customer_name }}</div>
-                                    {% if booking.nationality and booking.nationality != 'Malaysian' %}
-                                    <div class="text-xs text-gray-600 mt-1">🌍 {{ booking.nationality }}</div>
-                                    {% endif %}
-                                    {% if booking.ic_number %}
-                                    <div class="text-xs text-gray-500">IC: {{ booking.ic_number }}</div>
-                                    {% endif %}
+                                    {% if booking.nationality and booking.nationality != 'Malaysian' %}<div class="text-xs text-gray-600 mt-1">🌍 {{ booking.nationality }}</div>{% endif %}
+                                    {% if booking.ic_number %}<div class="text-xs text-gray-500">IC: {{ booking.ic_number }}</div>{% endif %}
                                 </td>
                                 <td class="px-6 py-4">
                                     <div class="text-sm font-semibold text-gray-900">{{ booking.vehicle_name }}</div>
                                     <div class="text-xs text-gray-600 mt-1">{{ booking.vehicle_type }}</div>
-                                    {% if booking.license_plate %}
-                                    <div class="text-xs text-yellow-600 font-bold">🚗 {{ booking.license_plate }}</div>
-                                    {% endif %}
+                                    {% if booking.license_plate %}<div class="text-xs text-yellow-600 font-bold">🚗 {{ booking.license_plate }}</div>{% endif %}
                                 </td>
                                 <td class="px-6 py-4">
                                     <div class="text-xs text-green-600 font-semibold">📅 {{ booking.start_date }}</div>
@@ -797,34 +432,23 @@
                                     <div class="text-xs text-red-700 font-bold">🕐 {{ booking.return_time }}</div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    {% if booking.total_price %}
-                                    <div class="text-sm font-bold text-green-600">RM {{ "%.2f"|format(booking.total_price) }}</div>
-                                    {% else %}
-                                    <div class="text-xs text-gray-400">-</div>
-                                    {% endif %}
+                                    {% if booking.total_price %}<div class="text-sm font-bold text-green-600">RM {{ "%.2f"|format(booking.total_price) }}</div>{% else %}<div class="text-xs text-gray-400">-</div>{% endif %}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <select data-booking-id="{{ booking.id }}" 
-                                            data-original-status="{{ booking.status }}"
-                                            @change="updateStatus($event, {{ booking.id }})"
-                                            class="status-select px-4 py-2 text-xs font-bold rounded-lg border-2 cursor-pointer transition {% if booking.status == 'confirmed' %}status-confirmed{% elif booking.status == 'pending' %}status-pending{% elif booking.status == 'completed' %}status-completed{% elif booking.status == 'cancelled' %}status-cancelled{% endif %}">
+                                    <select data-booking-id="{{ booking.id }}" data-original-status="{{ booking.status }}" @change="updateStatus($event, {{ booking.id }})" class="status-select px-4 py-2 text-xs font-bold rounded-lg border-2 cursor-pointer transition {% if booking.status == 'confirmed' %}status-confirmed{% elif booking.status == 'pending' %}status-pending{% elif booking.status == 'completed' %}status-completed{% elif booking.status == 'cancelled' %}status-cancelled{% endif %}">
                                         <option value="pending" {% if booking.status == 'pending' %}selected{% endif %}>⏳ Pending</option>
                                         <option value="confirmed" {% if booking.status == 'confirmed' %}selected{% endif %}>✓ Confirmed</option>
                                         <option value="completed" {% if booking.status == 'completed' %}selected{% endif %}>✓ Completed</option>
                                         <option value="cancelled" {% if booking.status == 'cancelled' %}selected{% endif %}>✗ Cancelled</option>
                                     </select>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-xs text-gray-600 font-medium">
-                                    {{ booking.created_at.strftime('%Y-%m-%d %H:%M') if booking.created_at else 'N/A' }}
-                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-xs text-gray-600 font-medium">{{ booking.created_at.strftime('%Y-%m-%d %H:%M') if booking.created_at else 'N/A' }}</td>
                             </tr>
                             {% endfor %}
                         {% else %}
                             <tr>
                                 <td colspan="7" class="px-6 py-16 text-center">
-                                    <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                    </svg>
+                                    <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                                     <div class="text-gray-400 text-xl font-bold mb-2">No bookings found</div>
                                     <p class="text-gray-500 text-sm">Try adjusting your filters or date range</p>
                                 </td>
@@ -835,35 +459,24 @@
             </div>
         </div>
 
-        <!-- Mobile Card View - COMPACT -->
+        <!-- Mobile Card View -->
         <div class="mobile-cards space-y-2">
             {% if bookings %}
                 {% for booking in bookings %}
                 <div class="mobile-table-card" x-data="{ bookingData: {{ booking|tojson }} }">
-                    <!-- Card Header - Compact -->
                     <div class="mobile-card-header">
                         <div class="flex-1 min-w-0">
-                            <button @click="openDetailModal(bookingData)" 
-                                    type="button"
-                                    class="text-xs font-bold text-blue-600 hover:underline truncate block">
-                                {{ booking.booking_number }}
-                            </button>
+                            <button @click="openDetailModal(bookingData)" type="button" class="text-xs font-bold text-blue-600 hover:underline truncate block">{{ booking.booking_number }}</button>
                             <p class="text-[0.5625rem] text-gray-500 mt-0.5">{{ booking.created_at.strftime('%m-%d %H:%M') if booking.created_at else 'N/A' }}</p>
                         </div>
-                        <select data-booking-id="{{ booking.id }}" 
-                                data-original-status="{{ booking.status }}"
-                                @change="updateStatus($event, {{ booking.id }})"
-                                class="mobile-status-select status-select rounded-md border-2 cursor-pointer ml-2 {% if booking.status == 'confirmed' %}status-confirmed{% elif booking.status == 'pending' %}status-pending{% elif booking.status == 'completed' %}status-completed{% elif booking.status == 'cancelled' %}status-cancelled{% endif %}">
+                        <select data-booking-id="{{ booking.id }}" data-original-status="{{ booking.status }}" @change="updateStatus($event, {{ booking.id }})" class="mobile-status-select status-select rounded-md border-2 cursor-pointer ml-2 {% if booking.status == 'confirmed' %}status-confirmed{% elif booking.status == 'pending' %}status-pending{% elif booking.status == 'completed' %}status-completed{% elif booking.status == 'cancelled' %}status-cancelled{% endif %}">
                             <option value="pending" {% if booking.status == 'pending' %}selected{% endif %}>Pending</option>
                             <option value="confirmed" {% if booking.status == 'confirmed' %}selected{% endif %}>Confirmed</option>
                             <option value="completed" {% if booking.status == 'completed' %}selected{% endif %}>Completed</option>
                             <option value="cancelled" {% if booking.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
                         </select>
                     </div>
-
-                    <!-- Card Content - Compact -->
                     <div class="space-y-1">
-                        <!-- Customer & Vehicle in one row -->
                         <div class="grid grid-cols-2 gap-2">
                             <div>
                                 <span class="mobile-card-label block">Customer</span>
@@ -874,38 +487,16 @@
                                 <span class="mobile-card-value text-gray-900 block truncate text-[0.6875rem]">{{ booking.vehicle_name }}</span>
                             </div>
                         </div>
-
-                        <!-- Dates - Compact inline format -->
                         <div class="flex items-center justify-between text-[0.625rem] pt-1 border-t border-gray-100">
-                            <div class="flex items-center gap-1">
-                                <span class="text-green-600 font-semibold">📅 {{ booking.start_date[5:] }}</span>
-                            </div>
+                            <span class="text-green-600 font-semibold">📅 {{ booking.start_date[5:] }}</span>
                             <span class="text-gray-400">→</span>
-                            <div class="flex items-center gap-1">
-                                <span class="text-red-600 font-semibold">{{ booking.end_date[5:] }} 📅</span>
-                            </div>
+                            <span class="text-red-600 font-semibold">{{ booking.end_date[5:] }} 📅</span>
                         </div>
-
-                        <!-- Price & Quick Info -->
                         <div class="flex items-center justify-between pt-1">
-                            {% if booking.total_price %}
-                            <span class="mobile-card-badge bg-green-100 text-green-700">
-                                💰 RM {{ "%.0f"|format(booking.total_price) }}
-                            </span>
-                            {% endif %}
-                            
+                            {% if booking.total_price %}<span class="mobile-card-badge bg-green-100 text-green-700">💰 RM {{ "%.0f"|format(booking.total_price) }}</span>{% endif %}
                             <div class="flex gap-1">
-                                {% if booking.license_plate %}
-                                <span class="mobile-card-badge bg-yellow-100 text-yellow-700">
-                                    🚗 {{ booking.license_plate }}
-                                </span>
-                                {% endif %}
-                                
-                                {% if booking.nationality and booking.nationality != 'Malaysian' %}
-                                <span class="mobile-card-badge bg-blue-100 text-blue-700">
-                                    🌍
-                                </span>
-                                {% endif %}
+                                {% if booking.license_plate %}<span class="mobile-card-badge bg-yellow-100 text-yellow-700">🚗 {{ booking.license_plate }}</span>{% endif %}
+                                {% if booking.nationality and booking.nationality != 'Malaysian' %}<span class="mobile-card-badge bg-blue-100 text-blue-700">🌍</span>{% endif %}
                             </div>
                         </div>
                     </div>
@@ -913,24 +504,19 @@
                 {% endfor %}
             {% else %}
                 <div class="mobile-table-card text-center py-8">
-                    <svg class="w-10 h-10 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                    </svg>
+                    <svg class="w-10 h-10 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                     <div class="text-gray-400 font-bold text-sm mb-1">No bookings found</div>
                     <p class="text-gray-500 text-xs">Try adjusting your filters</p>
                 </div>
             {% endif %}
         </div>
 
-        <!-- Results Count - RESPONSIVE -->
+        <!-- Results Count -->
         <div class="mt-4 md:mt-6 flex items-center justify-between">
             <div class="text-xs md:text-sm text-gray-600 font-medium">
                 Showing <span class="font-bold text-gray-900">{{ bookings|length }}</span> booking(s)
-                {% if total_bookings > bookings|length %}
-                 of <span class="font-bold text-gray-900">{{ total_bookings }}</span> total
-                {% endif %}
+                {% if total_bookings > bookings|length %} of <span class="font-bold text-gray-900">{{ total_bookings }}</span> total{% endif %}
             </div>
-            
             {% if total_pages > 1 %}
             <div class="flex items-center space-x-2">
                 <span class="text-xs md:text-sm text-gray-600">Page {{ page }}/{{ total_pages }}</span>
@@ -939,11 +525,8 @@
         </div>
     </div>
 
-    <!-- Booking Detail Modal - RESPONSIVE -->
-    <div x-show="showDetailModal" 
-         x-cloak
-         @click.self="showDetailModal = false"
-         class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[80] flex items-center justify-center p-2 md:p-4">
+    <!-- Booking Detail Modal -->
+    <div x-show="showDetailModal" x-cloak @click.self="showDetailModal = false" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[80] flex items-center justify-center p-2 md:p-4">
         <div class="bg-white rounded-2xl shadow-2xl w-full mobile-modal-content md:max-w-4xl md:max-h-[90vh] overflow-y-auto"
              x-show="showDetailModal"
              x-transition:enter="transition ease-out duration-300"
@@ -953,7 +536,6 @@
              x-transition:leave-start="opacity-100 scale-100"
              x-transition:leave-end="opacity-0 scale-95">
             <div class="print-area">
-                <!-- Header -->
                 <div class="bg-gradient-to-r from-blue-600 to-blue-800 text-white mobile-modal-header md:p-8 rounded-t-2xl">
                     <div class="flex items-center justify-between mb-3 md:mb-4">
                         <div>
@@ -966,147 +548,78 @@
                         </div>
                     </div>
                     <div class="flex items-center space-x-2 md:space-x-4">
-                        <span class="px-3 py-1.5 md:px-4 md:py-2 rounded-lg text-xs md:text-sm font-bold"
-                              :class="{
-                                  'bg-green-400 text-green-900': selectedBooking.status === 'confirmed',
-                                  'bg-yellow-400 text-yellow-900': selectedBooking.status === 'pending',
-                                  'bg-blue-400 text-blue-900': selectedBooking.status === 'completed',
-                                  'bg-red-400 text-red-900': selectedBooking.status === 'cancelled'
-                              }"
-                              x-text="selectedBooking.status ? selectedBooking.status.toUpperCase() : ''"></span>
+                        <span class="px-3 py-1.5 md:px-4 md:py-2 rounded-lg text-xs md:text-sm font-bold" :class="{'bg-green-400 text-green-900': selectedBooking.status === 'confirmed','bg-yellow-400 text-yellow-900': selectedBooking.status === 'pending','bg-blue-400 text-blue-900': selectedBooking.status === 'completed','bg-red-400 text-red-900': selectedBooking.status === 'cancelled'}" x-text="selectedBooking.status ? selectedBooking.status.toUpperCase() : ''"></span>
                         <span class="text-xs md:text-sm text-blue-100" x-text="'Created: ' + selectedBooking.created_at"></span>
                     </div>
                 </div>
-
-                <!-- Content -->
                 <div class="mobile-modal-body md:p-8">
-                    <!-- Customer Photo -->
                     <div x-show="selectedBooking.customer_photo" class="mb-4 md:mb-6 text-center">
                         <p class="text-xs md:text-sm font-semibold text-gray-600 mb-2 md:mb-3">Customer Photo</p>
-                        <img :src="selectedBooking.customer_photo" 
-                             alt="Customer Photo" 
-                             class="w-32 h-32 md:w-48 md:h-48 object-cover rounded-xl border-4 border-gray-200 mx-auto shadow-lg">
+                        <img :src="selectedBooking.customer_photo" alt="Customer Photo" class="w-32 h-32 md:w-48 md:h-48 object-cover rounded-xl border-4 border-gray-200 mx-auto shadow-lg">
                     </div>
-
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-4 md:mb-6">
-                        <!-- Customer Information -->
                         <div class="bg-blue-50 rounded-xl mobile-modal-section md:p-6 border-2 border-blue-200">
                             <h3 class="font-bold text-blue-900 mb-3 md:mb-4 flex items-center">
-                                <svg class="w-4 h-4 md:w-5 md:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                                </svg>
+                                <svg class="w-4 h-4 md:w-5 md:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
                                 Customer Info
                             </h3>
                             <div class="space-y-2 md:space-y-3">
-                                <div>
-                                    <p class="text-[0.625rem] md:text-xs text-gray-600 font-semibold">Full Name</p>
-                                    <p class="font-bold text-gray-900" x-text="selectedBooking.customer_name"></p>
-                                </div>
-                                <div x-show="selectedBooking.ic_number">
-                                    <p class="text-[0.625rem] md:text-xs text-gray-600 font-semibold">IC Number</p>
-                                    <p class="font-bold text-gray-900" x-text="selectedBooking.ic_number"></p>
-                                </div>
-                                <div x-show="selectedBooking.nationality">
-                                    <p class="text-[0.625rem] md:text-xs text-gray-600 font-semibold">Nationality</p>
-                                    <p class="font-bold text-gray-900" x-text="selectedBooking.nationality"></p>
-                                </div>
+                                <div><p class="text-[0.625rem] md:text-xs text-gray-600 font-semibold">Full Name</p><p class="font-bold text-gray-900" x-text="selectedBooking.customer_name"></p></div>
+                                <div x-show="selectedBooking.ic_number"><p class="text-[0.625rem] md:text-xs text-gray-600 font-semibold">IC Number</p><p class="font-bold text-gray-900" x-text="selectedBooking.ic_number"></p></div>
+                                <div x-show="selectedBooking.nationality"><p class="text-[0.625rem] md:text-xs text-gray-600 font-semibold">Nationality</p><p class="font-bold text-gray-900" x-text="selectedBooking.nationality"></p></div>
                             </div>
                         </div>
-
-                        <!-- Vehicle Information -->
                         <div class="bg-green-50 rounded-xl mobile-modal-section md:p-6 border-2 border-green-200">
                             <h3 class="font-bold text-green-900 mb-3 md:mb-4 flex items-center">
-                                <svg class="w-4 h-4 md:w-5 md:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                                </svg>
+                                <svg class="w-4 h-4 md:w-5 md:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                                 Vehicle Info
                             </h3>
                             <div class="space-y-2 md:space-y-3">
-                                <div>
-                                    <p class="text-[0.625rem] md:text-xs text-gray-600 font-semibold">Vehicle Name</p>
-                                    <p class="font-bold text-gray-900" x-text="selectedBooking.vehicle_name"></p>
-                                </div>
-                                <div>
-                                    <p class="text-[0.625rem] md:text-xs text-gray-600 font-semibold">Type</p>
-                                    <p class="font-bold text-gray-900" x-text="selectedBooking.vehicle_type"></p>
-                                </div>
-                                <div x-show="selectedBooking.license_plate">
-                                    <p class="text-[0.625rem] md:text-xs text-gray-600 font-semibold">License Plate</p>
-                                    <p class="font-bold text-yellow-600" x-text="selectedBooking.license_plate"></p>
-                                </div>
+                                <div><p class="text-[0.625rem] md:text-xs text-gray-600 font-semibold">Vehicle Name</p><p class="font-bold text-gray-900" x-text="selectedBooking.vehicle_name"></p></div>
+                                <div><p class="text-[0.625rem] md:text-xs text-gray-600 font-semibold">Type</p><p class="font-bold text-gray-900" x-text="selectedBooking.vehicle_type"></p></div>
+                                <div x-show="selectedBooking.license_plate"><p class="text-[0.625rem] md:text-xs text-gray-600 font-semibold">License Plate</p><p class="font-bold text-yellow-600" x-text="selectedBooking.license_plate"></p></div>
                             </div>
                         </div>
                     </div>
-
-                    <!-- Rental Period -->
                     <div class="bg-purple-50 rounded-xl mobile-modal-section md:p-6 border-2 border-purple-200 mb-4 md:mb-6">
                         <h3 class="font-bold text-purple-900 mb-3 md:mb-4 flex items-center">
-                            <svg class="w-4 h-4 md:w-5 md:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                            </svg>
+                            <svg class="w-4 h-4 md:w-5 md:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                             Rental Period
                         </h3>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                             <div>
                                 <p class="text-[0.625rem] md:text-xs text-gray-600 font-semibold mb-1 md:mb-2">Pickup</p>
-                                <p class="font-bold text-green-700">
-                                    📅 <span x-text="selectedBooking.start_date"></span>
-                                </p>
-                                <p class="font-bold text-green-800 mt-1">
-                                    🕐 <span x-text="selectedBooking.pickup_time"></span>
-                                </p>
+                                <p class="font-bold text-green-700">📅 <span x-text="selectedBooking.start_date"></span></p>
+                                <p class="font-bold text-green-800 mt-1">🕐 <span x-text="selectedBooking.pickup_time"></span></p>
                             </div>
                             <div>
                                 <p class="text-[0.625rem] md:text-xs text-gray-600 font-semibold mb-1 md:mb-2">Return</p>
-                                <p class="font-bold text-red-700">
-                                    📅 <span x-text="selectedBooking.end_date"></span>
-                                </p>
-                                <p class="font-bold text-red-800 mt-1">
-                                    🕐 <span x-text="selectedBooking.return_time"></span>
-                                </p>
+                                <p class="font-bold text-red-700">📅 <span x-text="selectedBooking.end_date"></span></p>
+                                <p class="font-bold text-red-800 mt-1">🕐 <span x-text="selectedBooking.return_time"></span></p>
                             </div>
                         </div>
                     </div>
-
-                    <!-- Location Information -->
                     <div x-show="selectedBooking.location || selectedBooking.destination" class="bg-orange-50 rounded-xl mobile-modal-section md:p-6 border-2 border-orange-200 mb-4 md:mb-6">
                         <h3 class="font-bold text-orange-900 mb-3 md:mb-4 flex items-center">
-                            <svg class="w-4 h-4 md:w-5 md:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                            </svg>
+                            <svg class="w-4 h-4 md:w-5 md:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                             Location Info
                         </h3>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                            <div x-show="selectedBooking.location">
-                                <p class="text-[0.625rem] md:text-xs text-gray-600 font-semibold">Pickup Location</p>
-                                <p class="font-bold text-gray-900" x-text="selectedBooking.location"></p>
-                            </div>
-                            <div x-show="selectedBooking.destination">
-                                <p class="text-[0.625rem] md:text-xs text-gray-600 font-semibold">Destination</p>
-                                <p class="font-bold text-gray-900" x-text="selectedBooking.destination"></p>
-                            </div>
+                            <div x-show="selectedBooking.location"><p class="text-[0.625rem] md:text-xs text-gray-600 font-semibold">Pickup Location</p><p class="font-bold text-gray-900" x-text="selectedBooking.location"></p></div>
+                            <div x-show="selectedBooking.destination"><p class="text-[0.625rem] md:text-xs text-gray-600 font-semibold">Destination</p><p class="font-bold text-gray-900" x-text="selectedBooking.destination"></p></div>
                         </div>
                     </div>
-
-                    <!-- Pricing -->
                     <div x-show="selectedBooking.total_price" class="bg-green-50 rounded-xl mobile-modal-section md:p-6 border-2 border-green-200">
                         <h3 class="font-bold text-green-900 mb-3 md:mb-4 flex items-center">
-                            <svg class="w-4 h-4 md:w-5 md:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
+                            <svg class="w-4 h-4 md:w-5 md:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                             Rental Price
                         </h3>
                         <div class="text-center">
-                            <p class="text-2xl md:text-4xl font-bold text-green-600">
-                                RM <span x-text="selectedBooking.total_price ? parseFloat(selectedBooking.total_price).toFixed(2) : '0.00'"></span>
-                            </p>
+                            <p class="text-2xl md:text-4xl font-bold text-green-600">RM <span x-text="selectedBooking.total_price ? parseFloat(selectedBooking.total_price).toFixed(2) : '0.00'"></span></p>
                             <p class="text-xs md:text-sm text-gray-600 mt-2">Total Rental Amount</p>
                         </div>
                     </div>
                 </div>
-
-                <!-- Footer -->
                 <div class="bg-gray-50 p-4 md:p-6 rounded-b-2xl border-t-2 border-gray-200">
                     <div class="text-center text-[0.625rem] md:text-xs text-gray-600">
                         <p class="font-semibold">VehicleRent - Motorcycle Rental Services</p>
@@ -1115,26 +628,18 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Action Buttons -->
             <div class="mobile-modal-footer md:p-6 bg-white border-t-2 border-gray-200 flex gap-3 no-print rounded-b-2xl">
-                <button @click="printDetail()" 
-                        class="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 px-6 rounded-xl font-bold transition shadow-lg flex items-center justify-center gap-2">
-                    <svg class="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
-                    </svg>
+                <button @click="printDetail()" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 px-6 rounded-xl font-bold transition shadow-lg flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
                     <span class="hidden md:inline">Print Details</span>
                     <span class="md:hidden">Print</span>
                 </button>
-                <button @click="showDetailModal = false" 
-                        class="px-6 md:px-8 bg-gray-200 hover:bg-gray-300 text-gray-700 py-3 rounded-xl font-bold transition">
-                    Close
-                </button>
+                <button @click="showDetailModal = false" class="px-6 md:px-8 bg-gray-200 hover:bg-gray-300 text-gray-700 py-3 rounded-xl font-bold transition">Close</button>
             </div>
         </div>
     </div>
 
-    <!-- Footer - RESPONSIVE -->
+    <!-- Footer -->
     <footer class="bg-white border-t border-gray-200 mt-8 md:mt-12">
         <div class="max-w-7xl mx-auto px-3 md:px-4 lg:px-8 py-4 md:py-6">
             <div class="flex flex-col md:flex-row justify-between items-center gap-3 md:gap-0">
@@ -1150,7 +655,12 @@
     </footer>
 
     <script>
-        // Alpine.js component for booking management with toast notifications and confirmation
+        // Mobile menu toggle - sama seperti admin_catalog
+        const btn = document.getElementById('mobile-menu-btn');
+        const menu = document.getElementById('mobile-menu');
+        btn.addEventListener('click', () => menu.classList.toggle('hidden'));
+
+        // Alpine.js component
         function bookingManagement() {
             return {
                 showDetailModal: false,
@@ -1161,7 +671,6 @@
                 toastIdCounter: 0,
                 
                 openDetailModal(booking) {
-                    console.log('Opening modal with booking:', booking);
                     this.selectedBooking = booking;
                     this.showDetailModal = true;
                 },
@@ -1172,27 +681,15 @@
                 
                 addToast(type, title, message) {
                     const id = this.toastIdCounter++;
-                    this.toasts.push({
-                        id: id,
-                        type: type,
-                        title: title,
-                        message: message,
-                        show: true
-                    });
-                    
-                    // Auto remove after 4 seconds
-                    setTimeout(() => {
-                        this.removeToast(id);
-                    }, 4000);
+                    this.toasts.push({ id, type, title, message, show: true });
+                    setTimeout(() => this.removeToast(id), 4000);
                 },
                 
                 removeToast(id) {
                     const index = this.toasts.findIndex(t => t.id === id);
                     if (index > -1) {
                         this.toasts[index].show = false;
-                        setTimeout(() => {
-                            this.toasts.splice(index, 1);
-                        }, 300);
+                        setTimeout(() => this.toasts.splice(index, 1), 300);
                     }
                 },
                 
@@ -1200,24 +697,12 @@
                     const selectElement = event.target;
                     const newStatus = selectElement.value;
                     const originalStatus = selectElement.dataset.originalStatus;
-                    
-                    // If status unchanged, do nothing
-                    if (newStatus === originalStatus) {
-                        return;
-                    }
-                    
-                    // Show confirmation modal
-                    this.confirmData = {
-                        bookingId: bookingId,
-                        newStatus: newStatus,
-                        originalStatus: originalStatus,
-                        selectElement: selectElement
-                    };
+                    if (newStatus === originalStatus) return;
+                    this.confirmData = { bookingId, newStatus, originalStatus, selectElement };
                     this.showConfirmModal = true;
                 },
                 
                 cancelConfirmation() {
-                    // Reset dropdown to original status
                     if (this.confirmData.selectElement) {
                         this.confirmData.selectElement.value = this.confirmData.originalStatus;
                     }
@@ -1227,52 +712,30 @@
                 
                 confirmStatusUpdate() {
                     const { bookingId, newStatus, originalStatus, selectElement } = this.confirmData;
-                    
-                    // Close confirmation modal
                     this.showConfirmModal = false;
-                    
-                    // Show loading toast
                     const loadingToastId = this.toastIdCounter++;
-                    this.toasts.push({
-                        id: loadingToastId,
-                        type: 'info',
-                        title: 'Updating Status',
-                        message: `Changing to ${newStatus}...`,
-                        show: true
-                    });
+                    this.toasts.push({ id: loadingToastId, type: 'info', title: 'Updating Status', message: `Changing to ${newStatus}...`, show: true });
                     
                     fetch(`/admin/booking/${bookingId}/update-status`, {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
+                        headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ status: newStatus })
                     })
                     .then(response => response.json())
                     .then(data => {
-                        // Remove loading toast
                         this.removeToast(loadingToastId);
-                        
                         if (data.success) {
                             selectElement.dataset.originalStatus = newStatus;
-                            
-                            // Update dropdown styling
                             selectElement.classList.remove('status-confirmed', 'status-pending', 'status-completed', 'status-cancelled');
                             selectElement.classList.add('status-' + newStatus);
-                            
-                            // Show success toast
                             this.addToast('success', 'Success!', `Status updated to ${newStatus}`);
                         } else {
-                            // Show error toast
                             this.addToast('error', 'Failed', data.message || 'Could not update status');
                             selectElement.value = originalStatus;
                         }
                     })
                     .catch(error => {
-                        // Remove loading toast
                         this.removeToast(loadingToastId);
-                        
-                        console.error('Error:', error);
                         this.addToast('error', 'Network Error', 'Please try again');
                         selectElement.value = originalStatus;
                     });
