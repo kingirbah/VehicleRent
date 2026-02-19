@@ -178,7 +178,7 @@ def init_db():
     with get_db_connection() as conn:
         cursor = get_db_cursor(conn)
         
-        print("\n🔧 Checking database schema...")
+        print("\nChecking database schema...")
         
         # Check vehicles table columns
         cursor.execute("""
@@ -261,7 +261,7 @@ def init_db():
             print("  ✅ Default admin created - user_id: admin, password: admin123")
         
         conn.commit()
-        print("✅ Database schema check completed!\n")
+        print("Database schema check completed!\n")
 
 
 # --- AUTHENTICATION ---
